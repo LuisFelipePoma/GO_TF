@@ -23,3 +23,6 @@ go.work.sum
 
 # env file
 .env
+
+src/api/database/raw/*.csv
+src/api/database/data/*.csv
