@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -13,21 +15,34 @@ import (
 
 // Movie representa la estructura de una película.
 type Movie struct {
-	ID         int    `json:"id"`
-	Keywords   string `json:"keywords"`
-	Characters string `json:"characters"`
-	Actors     string `json:"actors"`
-	Director   string `json:"director"`
-	Crew       string `json:"crew"`
-	Genres     string `json:"genres"`
-	Overview   string `json:"overview"`
-	Title      string `json:"title"`
+	ID          int     `json:"id"`
+	Keywords    string  `json:"keywords"`
+	Characters  string  `json:"characters"`
+	Actors      string  `json:"actors"`
+	Director    string  `json:"director"`
+	Crew        string  `json:"crew"`
+	Genres      string  `json:"genres"`
+	Overview    string  `json:"overview"`
+	Title       string  `json:"title"`
+	ImdbId      string  `json:"imdb_id"`
+	VoteAverage float64 `json:"vote_average"`
 }
 
-// SimilarMovie representa una película similar con su ID y título.
+// SimilarMovie representa una película similar con su ID y similaridad.
 type SimilarMovie struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
+	ID         int     `json:"id"`
+	Similarity float64 `json:"similarity"`
+}
+
+type MovieResponse struct {
+	ID          int     `json:"id"`
+	Title       string  `json:"title"`
+	Characters  string  `json:"characters"`
+	Actors      string  `json:"actors"`
+	Director    string  `json:"director"`
+	Genres      string  `json:"genres"`
+	ImdbId      string  `json:"imdb_id"`
+	VoteAverage float64 `json:"vote_average"`
 }
 
 var slaveNodes = []string{
@@ -40,19 +55,27 @@ var movies []Movie
 
 func main() {
 	// Leer el archivo JSON con las películas una vez
-	data, err := os.ReadFile("../../database/data/data_clean.json")
-	if err != nil {
-		fmt.Println("Error reading JSON file:", err)
+	if err := loadMovies("../../database/data/data_clean.json"); err != nil {
+		fmt.Println("Error loading movies:", err)
 		return
+	}
+	// Registrar el manejador de la ruta /similar_movies
+	http.HandleFunc("/similar_movies", similarMoviesHandler)
+	// Iniciar el servidor HTTP
+	http.ListenAndServe(":8080", nil)
+}
+
+func loadMovies(filePath string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("error reading JSON file: %w", err)
 	}
 
 	if err := json.Unmarshal(data, &movies); err != nil {
-		fmt.Println("Error deserializing JSON:", err)
-		return
+		return fmt.Errorf("error deserializing JSON: %w", err)
 	}
 
-	http.HandleFunc("/similar_movies", similarMoviesHandler)
-	http.ListenAndServe(":8080", nil)
+	return nil
 }
 
 func similarMoviesHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,24 +87,23 @@ func similarMoviesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Dividir películas entre los esclavos
+	// Dividir índices de películas entre los esclavos
 	numSlaves := len(slaveNodes)
-	movieChunks := splitMovies(movies, numSlaves)
+	ranges := splitRanges(len(movies), numSlaves)
 
 	var wg sync.WaitGroup
 	results := make(chan []SimilarMovie, numSlaves)
-	//
-	fmt.Println("Handling petition for:", movieID)
+
 	for i, node := range slaveNodes {
 		wg.Add(1)
-		go func(node string, chunk []Movie) {
-			// func(node string, chunk []Movie) {
+		// go func(node string, startIdx, endIdx, movieID int) {
+		func(node string, startIdx, endIdx, movieID int) {
 			defer wg.Done()
-			result, err := getSimilarMoviesFromNode(node, chunk, movieID)
+			result, err := getSimilarMoviesFromNode(node, startIdx, endIdx, movieID)
 			if err == nil {
 				results <- result
 			}
-		}(node, movieChunks[i])
+		}(node, ranges[i][0], ranges[i][1], movieID)
 	}
 
 	wg.Wait()
@@ -91,27 +113,55 @@ func similarMoviesHandler(w http.ResponseWriter, r *http.Request) {
 	for result := range results {
 		combinedResults = append(combinedResults, result...)
 	}
+	fmt.Println("Combined results:", len(combinedResults))
+	// Sort by simliarity and return just the 100 first
+	sort.Slice(combinedResults, func(i, j int) bool {
+		return combinedResults[i].Similarity > combinedResults[j].Similarity
+	})
+	if len(combinedResults) > 10 {
+		combinedResults = combinedResults[:10]
+	}
+	fmt.Println("Results from sort", len(combinedResults))
+	// Parse from SimilarMovie to MovieResponse
+	var movieResponses []MovieResponse
+	for _, similarMovie := range combinedResults {
+		for _, movie := range movies {
+			if movie.ID == similarMovie.ID {
+				movieResponses = append(movieResponses, MovieResponse{
+					ID:          similarMovie.ID,
+					Title:       movie.Title,
+					Characters:  movie.Characters,
+					Actors:      movie.Actors,
+					Director:    movie.Director,
+					Genres:      movie.Genres,
+					ImdbId:      movie.ImdbId,
+					VoteAverage: movie.VoteAverage,
+				})
+				break
+			}
+		}
+	}
 
 	// Enviar la respuesta al cliente
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(combinedResults)
+	json.NewEncoder(w).Encode(movieResponses)
 	fmt.Printf("Request processed in %s\n", time.Since(start))
 }
 
-func splitMovies(movies []Movie, numParts int) [][]Movie {
-	chunkSize := (len(movies) + numParts - 1) / numParts
-	var chunks [][]Movie
-	for i := 0; i < len(movies); i += chunkSize {
+func splitRanges(totalMovies, numParts int) [][2]int {
+	chunkSize := (totalMovies + numParts - 1) / numParts
+	var ranges [][2]int
+	for i := 0; i < totalMovies; i += chunkSize {
 		end := i + chunkSize
-		if end > len(movies) {
-			end = len(movies)
+		if end > totalMovies {
+			end = totalMovies
 		}
-		chunks = append(chunks, movies[i:end])
+		ranges = append(ranges, [2]int{i, end})
 	}
-	return chunks
+	return ranges
 }
 
-func getSimilarMoviesFromNode(node string, movies []Movie, movieID int) ([]SimilarMovie, error) {
+func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]SimilarMovie, error) {
 	conn, err := net.Dial("tcp", node)
 	if err != nil {
 		return nil, err
@@ -120,27 +170,32 @@ func getSimilarMoviesFromNode(node string, movies []Movie, movieID int) ([]Simil
 
 	task := struct {
 		Movies      []Movie `json:"movies"`
-		TargetMovie int     `json:"target_movie"`
+		TargetMovie Movie   `json:"target_movie"`
 	}{
-		Movies:      movies,
-		TargetMovie: movieID,
+		Movies:      movies[startIdx:endIdx],
+		TargetMovie: movies[movieID],
 	}
-	// Codificar la tarea en JSON y enviarla al servidor
-	encoder := json.NewEncoder(conn)
-	if err := encoder.Encode(task); err != nil {
-		fmt.Println("Error al codificar JSON:", err)
+
+	data, err := json.Marshal(task)
+	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Nodo maestro envió la pelicula: %+v\n", task)
 
-	// Decodificar la respuesta del servidor
-	var result []SimilarMovie
-	decoder := json.NewDecoder(conn)
-	if err := decoder.Decode(&result); err != nil {
-		fmt.Println("Error al decodificar JSON:", err)
+	_, err = conn.Write(data)
+	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Nodo maestro recibió resultados")
 
-	return result, nil
+	response, err := io.ReadAll(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	var similarMovies []SimilarMovie
+	err = json.Unmarshal(response, &similarMovies)
+	if err != nil {
+		return nil, err
+	}
+
+	return similarMovies, nil
 }

@@ -27,10 +27,10 @@ type Movie struct {
 	Title      string `json:"title"`
 }
 
-// SimilarMovie representa una película similar con su ID y título.
+// SimilarMovie representa una película similar con su ID.
 type SimilarMovie struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
+	ID int `json:"id"`
+	Similarity float64 `json:"similarity"`
 }
 
 // CosineSimilarity calcula la similitud del coseno entre dos vectores.
@@ -62,18 +62,8 @@ func GetFeatureVector(features string) map[string]float64 {
 }
 
 // GetSimilarMovies retorna una lista de películas similares a la película dada.
-func GetSimilarMovies(movies []Movie, movieID int) []SimilarMovie {
+func GetSimilarMovies(movies []Movie, targetMovie Movie) []SimilarMovie {
 	start := time.Now()
-	var targetMovie *Movie
-	for _, movie := range movies {
-		if movie.ID == movieID {
-			targetMovie = &movie
-			break
-		}
-	}
-	if targetMovie == nil {
-		return nil
-	}
 
 	targetFeatures := GetFeatureVector(targetMovie.Keywords + ", " + targetMovie.Characters + ", " + targetMovie.Actors + ", " + targetMovie.Director + ", " + targetMovie.Crew + ", " + targetMovie.Genres + ", " + targetMovie.Overview)
 
@@ -82,7 +72,7 @@ func GetSimilarMovies(movies []Movie, movieID int) []SimilarMovie {
 	var wg sync.WaitGroup
 
 	for _, movie := range movies {
-		if movie.ID != movieID {
+		if movie.ID != targetMovie.ID {
 			wg.Add(1)
 			go func(movie Movie) {
 				defer wg.Done()
@@ -115,7 +105,7 @@ func GetSimilarMovies(movies []Movie, movieID int) []SimilarMovie {
 	for _, movie := range sortedMovies {
 		for _, m := range movies {
 			if m.ID == movie.movieID {
-				result = append(result, SimilarMovie{ID: m.ID, Title: m.Title})
+				result = append(result, SimilarMovie{ID: m.ID, Similarity: movie.similarity})
 				break
 			}
 		}
@@ -132,7 +122,7 @@ func handleConnection(conn net.Conn) {
 	// Decodificar el JSON recibido en una estructura Task
 	var task struct {
 		Movies      []Movie `json:"movies"`
-		TargetMovie int     `json:"target_movie"`
+		TargetMovie Movie   `json:"target_movie"`
 	}
 	decoder := json.NewDecoder(conn)
 	if err := decoder.Decode(&task); err != nil {
@@ -144,6 +134,9 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("Getting similar movies....")
 	// Obtener películas similares
 	similarMovies := GetSimilarMovies(task.Movies, task.TargetMovie)
+
+	// Imprimir la cantidad de películas similares encontradas
+	fmt.Println("Found", len(similarMovies), "similar movies")
 
 	// Codificar el resultado en JSON y enviarlo de vuelta al cliente
 	encoder := json.NewEncoder(conn)
