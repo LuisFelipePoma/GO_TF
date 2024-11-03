@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -59,10 +58,24 @@ func main() {
 		fmt.Println("Error loading movies:", err)
 		return
 	}
-	// Registrar el manejador de la ruta /similar_movies
-	http.HandleFunc("/similar_movies", similarMoviesHandler)
-	// Iniciar el servidor HTTP
-	http.ListenAndServe(":8080", nil)
+
+	// Iniciar la interfaz de usuario en consola
+	for {
+		fmt.Println("Ingrese el ID de la película para encontrar similares (o 'exit' para salir):")
+		var input string
+		fmt.Scanln(&input)
+		if input == "exit" {
+			break
+		}
+
+		movieID, err := strconv.Atoi(input)
+		if err != nil {
+			fmt.Println("ID de película inválido")
+			continue
+		}
+
+		similarMoviesHandler(movieID)
+	}
 }
 
 func loadMovies(filePath string) error {
@@ -78,14 +91,8 @@ func loadMovies(filePath string) error {
 	return nil
 }
 
-func similarMoviesHandler(w http.ResponseWriter, r *http.Request) {
+func similarMoviesHandler(movieID int) {
 	start := time.Now()
-	movieIDStr := r.URL.Query().Get("id")
-	movieID, err := strconv.Atoi(movieIDStr)
-	if err != nil {
-		http.Error(w, "Invalid movie ID", http.StatusBadRequest)
-		return
-	}
 
 	// Dividir índices de películas entre los esclavos
 	numSlaves := len(slaveNodes)
@@ -96,8 +103,7 @@ func similarMoviesHandler(w http.ResponseWriter, r *http.Request) {
 
 	for i, node := range slaveNodes {
 		wg.Add(1)
-		// go func(node string, startIdx, endIdx, movieID int) {
-		func(node string, startIdx, endIdx, movieID int) {
+		go func(node string, startIdx, endIdx, movieID int) {
 			defer wg.Done()
 			result, err := getSimilarMoviesFromNode(node, startIdx, endIdx, movieID)
 			if err == nil {
@@ -113,15 +119,13 @@ func similarMoviesHandler(w http.ResponseWriter, r *http.Request) {
 	for result := range results {
 		combinedResults = append(combinedResults, result...)
 	}
-	fmt.Println("Combined results:", len(combinedResults))
-	// Sort by simliarity and return just the 100 first
+	// Sort by similarity and return just the 10 first
 	sort.Slice(combinedResults, func(i, j int) bool {
 		return combinedResults[i].Similarity > combinedResults[j].Similarity
 	})
 	if len(combinedResults) > 10 {
 		combinedResults = combinedResults[:10]
 	}
-	fmt.Println("Results from sort", len(combinedResults))
 	// Parse from SimilarMovie to MovieResponse
 	var movieResponses []MovieResponse
 	for _, similarMovie := range combinedResults {
@@ -142,9 +146,12 @@ func similarMoviesHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Enviar la respuesta al cliente
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(movieResponses)
+	// Mostrar la respuesta en la consola
+	fmt.Println("Películas similares encontradas:")
+	for _, movieResponse := range movieResponses {
+		fmt.Printf("Título: %s\n Descripción: %s\n Voto promedio: %.2f\n\n",
+			movieResponse.Title, movieResponse.Genres, movieResponse.VoteAverage)
+	}
 	fmt.Printf("Request processed in %s\n", time.Since(start))
 }
 
