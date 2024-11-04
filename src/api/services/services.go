@@ -1,9 +1,9 @@
 package services
 
 import (
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
 	"encoding/json"
 	"fmt"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
 	"os"
 	"strings"
 )
@@ -79,7 +79,7 @@ func (m *Movies) PrintRecomendationsDetails() {
 	}
 }
 
-func (m *Movies) PrintMoviesDetails(movies []types.MovieResponse)  {
+func (m *Movies) PrintMoviesDetails(movies []types.MovieResponse) {
 	for _, movie := range movies {
 		fmt.Printf("Title: %s\n", movie.Title)
 		fmt.Printf("Vote Average: %.2f\n", movie.VoteAverage)
@@ -87,7 +87,6 @@ func (m *Movies) PrintMoviesDetails(movies []types.MovieResponse)  {
 		fmt.Println("-----------------------------")
 	}
 }
-
 
 func (m *Movies) GetRecomendationsByGenre(genre string) []types.MovieResponse {
 	var filteredMovies []types.MovieResponse

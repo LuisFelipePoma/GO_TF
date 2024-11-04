@@ -3,7 +3,7 @@ package master
 import (
 	"encoding/json"
 	"fmt"
-	movies "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/services"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/services"
 	"io"
 	"log"
 	"net"
