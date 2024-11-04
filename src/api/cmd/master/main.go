@@ -1,13 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"os"
+	"os/exec"
 	"sort"
-	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -47,10 +49,13 @@ type MovieResponse struct {
 var slaveNodes = []string{
 	"localhost:8082",
 	"localhost:8083",
+	"localhost:8084",
 	// Agrega más nodos esclavos según sea necesario
 }
 
 var movies []Movie
+var recommendations []MovieResponse
+var lastRecommendedMovieTitle string
 
 func main() {
 	// Leer el archivo JSON con las películas una vez
@@ -59,22 +64,121 @@ func main() {
 		return
 	}
 
-	// Iniciar la interfaz de usuario en consola
+	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Println("Ingrese el ID de la película para encontrar similares (o 'exit' para salir):")
-		var input string
-		fmt.Scanln(&input)
-		if input == "exit" {
+		fmt.Println("Seleccione una opción:")
+		fmt.Println("1. Recomendar en base a una película")
+		fmt.Println("2. Mostrar recientes recomendaciones")
+		fmt.Println("3. Filtrar por género las últimas recomendaciones")
+		fmt.Println("4. Filtrar por voteAverage las últimas recomendaciones")
+		fmt.Println("5. Salir")
+		fmt.Print("Opción: ")
+		optionStr, _ := reader.ReadString('\n')
+		optionStr = strings.TrimSpace(optionStr)
+		option := 0
+		fmt.Sscanf(optionStr, "%d", &option)
+
+		switch option {
+		case 1:
+			fmt.Println("Ingrese el título de la película:")
+			title, _ := reader.ReadString('\n')
+			title = strings.TrimSpace(title)
+			recommendations = recomendMoviesByTitle(title)
+			fmt.Println("Recomendaciones:")
+			printMovieDetails(recommendations)
+
+		case 2:
+			clearConsole()
+			if len(recommendations) == 0 {
+				fmt.Print("No hay recomendaciones recientes.\n\n")
+				continue
+			}
+			fmt.Printf("Últimas recomendaciones basadas en la película: %s\n", lastRecommendedMovieTitle)
+			printMovieDetails(recommendations)
+
+		case 3:
+			clearConsole()
+			if len(recommendations) == 0 {
+				fmt.Print("No hay recomendaciones para filtrar.\n\n")
+				continue
+			}
+			fmt.Println("Ingrese el género:")
+			genre, _ := reader.ReadString('\n')
+			genre = strings.TrimSpace(genre)
+			response := filterMoviesByGenre(recommendations, genre)
+			fmt.Println("Recomendaciones filtradas por género:")
+			printMovieDetails(response)
+
+		case 4:
+			clearConsole()
+			if len(recommendations) == 0 {
+				fmt.Print("No hay recomendaciones para filtrar.\n\n")
+				continue
+			}
+			fmt.Println("Ingrese el voteAverage mínimo:")
+			voteAverageStr, _ := reader.ReadString('\n')
+			voteAverageStr = strings.TrimSpace(voteAverageStr)
+			minVoteAverage := 0.0
+			fmt.Sscanf(voteAverageStr, "%f", &minVoteAverage)
+			response := filterMoviesByVoteAverage(recommendations, minVoteAverage)
+			fmt.Println("Recomendaciones filtradas por voteAverage:")
+			printMovieDetails(response)
+
+		case 5:
+			fmt.Println("Saliendo...")
+			return
+		default:
+			fmt.Println("Opción no válida, intente de nuevo.")
+		}
+	}
+}
+
+// OPTIONS
+func filterMoviesByVoteAverage(movies []MovieResponse, minVoteAverage float64) []MovieResponse {
+	var filteredMovies []MovieResponse
+	for _, movie := range movies {
+		if movie.VoteAverage >= minVoteAverage {
+			filteredMovies = append(filteredMovies, movie)
+		}
+	}
+	return filteredMovies
+}
+
+func recomendMoviesByTitle(title string) []MovieResponse {
+	var response []MovieResponse
+	for _, movie := range movies {
+		if strings.EqualFold(strings.ToLower(movie.Title), strings.ToLower(title)) {
+			response = similarMoviesHandler(movie.ID)
+			lastRecommendedMovieTitle = movie.Title
 			break
 		}
+	}
+	return response
+}
 
-		movieID, err := strconv.Atoi(input)
-		if err != nil {
-			fmt.Println("ID de película inválido")
-			continue
+func filterMoviesByGenre(movies []MovieResponse, genre string) []MovieResponse {
+	var filteredMovies []MovieResponse
+	for _, movie := range movies {
+		if strings.Contains(strings.ToLower(movie.Genres), strings.ToLower(genre)) {
+			filteredMovies = append(filteredMovies, movie)
 		}
+	}
+	return filteredMovies
+}
 
-		similarMoviesHandler(movieID)
+// OTHER
+
+func clearConsole() {
+	cmd := exec.Command("cmd", "/c", "cls")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
+func printMovieDetails(movies []MovieResponse) {
+	for _, movie := range movies {
+		fmt.Printf("Title: %s\n", movie.Title)
+		fmt.Printf("Vote Average: %.2f\n", movie.VoteAverage)
+		fmt.Printf("Genres: %s\n", movie.Genres)
+		fmt.Println("-----------------------------")
 	}
 }
 
@@ -91,10 +195,9 @@ func loadMovies(filePath string) error {
 	return nil
 }
 
-func similarMoviesHandler(movieID int) {
+func similarMoviesHandler(movieID int) []MovieResponse {
 	start := time.Now()
 
-	// Dividir índices de películas entre los esclavos
 	numSlaves := len(slaveNodes)
 	ranges := splitRanges(len(movies), numSlaves)
 
@@ -119,14 +222,14 @@ func similarMoviesHandler(movieID int) {
 	for result := range results {
 		combinedResults = append(combinedResults, result...)
 	}
-	// Sort by similarity and return just the 10 first
+
 	sort.Slice(combinedResults, func(i, j int) bool {
 		return combinedResults[i].Similarity > combinedResults[j].Similarity
 	})
 	if len(combinedResults) > 10 {
 		combinedResults = combinedResults[:10]
 	}
-	// Parse from SimilarMovie to MovieResponse
+
 	var movieResponses []MovieResponse
 	for _, similarMovie := range combinedResults {
 		for _, movie := range movies {
@@ -145,14 +248,8 @@ func similarMoviesHandler(movieID int) {
 			}
 		}
 	}
-
-	// Mostrar la respuesta en la consola
-	fmt.Println("Películas similares encontradas:")
-	for _, movieResponse := range movieResponses {
-		fmt.Printf("Título: %s\n Descripción: %s\n Voto promedio: %.2f\n\n",
-			movieResponse.Title, movieResponse.Genres, movieResponse.VoteAverage)
-	}
 	fmt.Printf("Request processed in %s\n", time.Since(start))
+	return movieResponses
 }
 
 func splitRanges(totalMovies, numParts int) [][2]int {
@@ -175,13 +272,21 @@ func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]Sim
 	}
 	defer conn.Close()
 
+	// get movie by id
+	var target Movie
+	for _, movie := range movies {
+		if movie.ID == movieID {
+			target = movie
+			break
+		}
+	}
+
 	task := struct {
 		Movies      []Movie `json:"movies"`
 		TargetMovie Movie   `json:"target_movie"`
 	}{
 		Movies:      movies[startIdx:endIdx],
-		TargetMovie: movies[movieID],
-	}
+		TargetMovie: target}
 
 	data, err := json.Marshal(task)
 	if err != nil {
