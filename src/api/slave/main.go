@@ -12,36 +12,37 @@ import (
 	"strings"
 )
 
+// Entry point of the program
 func main() {
-	// Leer el puerto del usuario
+	// Read port from command line arguments or stdin
 	port := ""
 	if len(os.Args) > 1 {
 		port = os.Args[1]
 	} else {
+		// If no port is provided, ask the user to enter it
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Enter port: ")
 		port, _ = reader.ReadString('\n')
 		port = strings.TrimSpace(port)
 
-		// Validar que el puerto sea un número válido
+		// Validate port number
 		if _, err := strconv.Atoi(port); err != nil {
 			fmt.Println("Invalid port number")
 			return
 		}
 	}
 
-	// Iniciar el servidor TCP
+	// Initialize TCP server
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		fmt.Println("Error starting TCP server:", err)
 		return
 	}
 	defer ln.Close()
-
 	fmt.Println("Slave node listening on port", port)
 
+	// Accept incoming connections
 	for {
-		// Aceptar conexiones entrantes
 		conn, err := ln.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection:", err)
@@ -51,34 +52,33 @@ func main() {
 	}
 }
 
+// handleConnection handles incoming connections
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	fmt.Println("Leyendo los datos entrantes....")
-	// Decodificar el JSON recibido en una estructura Task
+	// Decodificate the JSON data
 	var task struct {
 		Movies      []types.Movie `json:"movies"`
 		TargetMovie types.Movie   `json:"target_movie"`
 	}
-	decoder := json.NewDecoder(conn)
+	decoder := json.NewDecoder(conn) // Create a JSON decoder that reads from
+	// Parse the JSON data
 	if err := decoder.Decode(&task); err != nil {
 		fmt.Println("Error al decodificar JSON:", err)
 		return
 	}
 	fmt.Println("Nodo Esclavo recibió tarea...")
-
 	fmt.Println("Calculando las peliculas similares....")
 
-	// Crear una instancia de Recommender
+	// Create a new recommender instance
 	recommender := model.NewRecommender()
 
-	// Obtener películas similares
+	// Get similar movies
 	similarMovies := recommender.GetSimilarMovies(task.Movies, task.TargetMovie)
-
-	// Imprimir la cantidad de películas similares encontradas
 	fmt.Println("Se encontro", len(similarMovies), "similar movies")
 
-	// Codificar el resultado en JSON y enviarlo de vuelta al cliente
+	// Send the result back to the master node
 	encoder := json.NewEncoder(conn)
 	if err := encoder.Encode(similarMovies); err != nil {
 		fmt.Println("Error al codificar JSON:", err)

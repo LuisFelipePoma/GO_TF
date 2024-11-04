@@ -1,6 +1,6 @@
 package types
 
-// Movie representa la estructura de una película.
+// Movie represents the structure of a movie.
 type Movie struct {
 	ID          int     `json:"id"`
 	Keywords    string  `json:"keywords"`
@@ -15,12 +15,13 @@ type Movie struct {
 	VoteAverage float64 `json:"vote_average"`
 }
 
-// SimilarMovie representa una película similar con su ID y similaridad.
+// SimilarMovie represents the structure of a similar movie.
 type SimilarMovie struct {
 	ID         int     `json:"id"`
 	Similarity float64 `json:"similarity"`
 }
 
+// MovieResponse represents the structure of a movie response.
 type MovieResponse struct {
 	ID          int     `json:"id"`
 	Title       string  `json:"title"`
@@ -32,12 +33,14 @@ type MovieResponse struct {
 	VoteAverage float64 `json:"vote_average"`
 }
 
+// Response represents the structure of a response.
 type Response struct {
 	Error         string          `json:"error"`
 	MovieResponse []MovieResponse `json:"movie_response"`
 	TargetMovie   string          `json:"target_movie"`
 }
 
+// Request represents the structure of a request.
 type Request struct {
 	Option int    `json:"option"`
 	Data   string `json:"data"`

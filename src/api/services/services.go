@@ -8,27 +8,26 @@ import (
 	"strings"
 )
 
-// Movies representa la estructura de las películas.
+// Movies represents the structure of the movies service.
 type Movies struct {
 	Movies            []types.Movie
 	Recommendations   []types.MovieResponse
 	LastRecomendation string
 }
 
-// NewMovies crea una nueva instancia de Movies.
+// NewMovies creates a new Movies service.
 func NewMovies() *Movies {
 	return &Movies{
 		Movies: []types.Movie{},
 	}
 }
 
-// LoadMovies carga las películas desde un archivo JSON.
+// LoadMovies load movies from a JSON file.
 func (m *Movies) LoadMovies(filePath string) error {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("error reading JSON file: %w", err)
 	}
-
 	if err := json.Unmarshal(data, &m.Movies); err != nil {
 		return fmt.Errorf("error deserializing JSON: %w", err)
 	}
@@ -36,22 +35,7 @@ func (m *Movies) LoadMovies(filePath string) error {
 	return nil
 }
 
-// SetRecomendations establece las recomendaciones de películas.
-func (m *Movies) SetRecomendations(Recommendations []types.MovieResponse) {
-	m.Recommendations = Recommendations
-}
-
-// SetLastRecommendedMovieTitle establece el título de la última película recomendada.
-func (m *Movies) SetLastRecommendedMovieTitle(title string) {
-	m.LastRecomendation = title
-}
-
-// GetMovies retorna todas las n películas.
-func (m *Movies) GetMovies(n int) []types.Movie {
-	return m.Movies[:n]
-}
-
-// GetMovieByTitle retorna una película por su título.
+// GetMovieByTitle returns a movie by its id.
 func (m *Movies) GetMovieByID(movieID int) *types.Movie {
 	// string to int
 	for _, movie := range m.Movies {
@@ -62,7 +46,7 @@ func (m *Movies) GetMovieByID(movieID int) *types.Movie {
 	return nil
 }
 
-// GetMovieByTitle retorna una película por su título.
+// GetMovieByTitle returns a movie by its title.
 func (m *Movies) GetMovieByTitle(title string) *types.Movie {
 	for _, movie := range m.Movies {
 		if strings.EqualFold(movie.Title, title) {
@@ -72,15 +56,7 @@ func (m *Movies) GetMovieByTitle(title string) *types.Movie {
 	return nil
 }
 
-// IsEmptyRecommendationsverifica si no hay recomendaciones.
-func (m *Movies) IsEmptyRecommendations() bool {
-	if len(m.Recommendations) == 0 {
-		fmt.Println("No hay recomendaciones recientes.")
-		return true
-	}
-	return false
-}
-
+// GetMoviesByGenre returns a list of movies by genre.
 func (m *Movies) GetRecomendationsByGenre(genre string) []types.MovieResponse {
 	var filteredMovies []types.MovieResponse
 	for _, movie := range m.Recommendations {
@@ -91,6 +67,7 @@ func (m *Movies) GetRecomendationsByGenre(genre string) []types.MovieResponse {
 	return filteredMovies
 }
 
+// GetMoviesByVoteAverage returns a list of movies by vote average.
 func (m *Movies) GetMoviesByVoteAverage(voteAverageStr string) []types.MovieResponse {
 	minVoteAverage := 0.0
 	fmt.Sscanf(voteAverageStr, "%f", &minVoteAverage)
