@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	// "net"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,8 +15,8 @@ var nodeMasterPort = "localhost:8081"
 
 func main() {
 	// Create port to send option to master
-	port := "8080"
-	nodeMaster := net.
+	
+	// nodeMaster := net.Listen("tcp", nodeMasterPort)
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
