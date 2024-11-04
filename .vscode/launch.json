@@ -4,21 +4,20 @@
 	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 	"version": "0.2.0",
 	"configurations": [
-		
 		{
 			"name": "Launch Master",
 			"type": "go",
 			"request": "launch",
 			"console": "integratedTerminal",
 			"mode": "debug",
-			"program": "${workspaceFolder}/src/api/cmd/master/main.go",
+			"program": "${workspaceFolder}/src/api/master/main.go",
 		},
 		{
 			"name": "Launch Slave 8084",
 			"type": "go",
 			"request": "launch",
 			"mode": "auto",
-			"program": "${workspaceFolder}/src/api/cmd/slave/main.go",
+			"program": "${workspaceFolder}/src/api/slave/main.go",
 			"args": [
 				"8084"
 			]
@@ -28,7 +27,7 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "auto",
-			"program": "${workspaceFolder}/src/api/cmd/slave/main.go",
+			"program": "${workspaceFolder}/src/api/slave/main.go",
 			"args": [
 				"8083"
 			]
@@ -38,7 +37,7 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "auto",
-			"program": "${workspaceFolder}/src/api/cmd/slave/main.go",
+			"program": "${workspaceFolder}/src/api/slave/main.go",
 			"args": [
 				"8082"
 			]

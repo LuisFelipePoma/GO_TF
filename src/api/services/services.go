@@ -53,8 +53,19 @@ func (m *Movies) GetMovies(n int) []types.Movie {
 
 // GetMovieByTitle retorna una película por su título.
 func (m *Movies) GetMovieByID(movieID int) *types.Movie {
+	// string to int
 	for _, movie := range m.Movies {
 		if movie.ID == movieID {
+			return &movie
+		}
+	}
+	return nil
+}
+
+// GetMovieByTitle retorna una película por su título.
+func (m *Movies) GetMovieByTitle(title string) *types.Movie {
+	for _, movie := range m.Movies {
+		if strings.EqualFold(movie.Title, title) {
 			return &movie
 		}
 	}
@@ -70,24 +81,6 @@ func (m *Movies) IsEmptyRecommendations() bool {
 	return false
 }
 
-func (m *Movies) PrintRecomendationsDetails() {
-	for _, movie := range m.Recommendations {
-		fmt.Printf("Title: %s\n", movie.Title)
-		fmt.Printf("Vote Average: %.2f\n", movie.VoteAverage)
-		fmt.Printf("Genres: %s\n", movie.Genres)
-		fmt.Println("-----------------------------")
-	}
-}
-
-func (m *Movies) PrintMoviesDetails(movies []types.MovieResponse) {
-	for _, movie := range movies {
-		fmt.Printf("Title: %s\n", movie.Title)
-		fmt.Printf("Vote Average: %.2f\n", movie.VoteAverage)
-		fmt.Printf("Genres: %s\n", movie.Genres)
-		fmt.Println("-----------------------------")
-	}
-}
-
 func (m *Movies) GetRecomendationsByGenre(genre string) []types.MovieResponse {
 	var filteredMovies []types.MovieResponse
 	for _, movie := range m.Recommendations {
@@ -98,7 +91,9 @@ func (m *Movies) GetRecomendationsByGenre(genre string) []types.MovieResponse {
 	return filteredMovies
 }
 
-func (m *Movies) GetMoviesByVoteAverage(minVoteAverage float64) []types.MovieResponse {
+func (m *Movies) GetMoviesByVoteAverage(voteAverageStr string) []types.MovieResponse {
+	minVoteAverage := 0.0
+	fmt.Sscanf(voteAverageStr, "%f", &minVoteAverage)
 	var filteredMovies []types.MovieResponse
 	for _, movie := range m.Recommendations {
 		if movie.VoteAverage >= minVoteAverage {

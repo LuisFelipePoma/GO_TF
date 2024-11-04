@@ -31,3 +31,14 @@ type MovieResponse struct {
 	ImdbId      string  `json:"imdb_id"`
 	VoteAverage float64 `json:"vote_average"`
 }
+
+type Response struct {
+	Error         string          `json:"error"`
+	MovieResponse []MovieResponse `json:"movie_response"`
+	TargetMovie   string          `json:"target_movie"`
+}
+
+type Request struct {
+	Option int    `json:"option"`
+	Data   string `json:"data"`
+}
