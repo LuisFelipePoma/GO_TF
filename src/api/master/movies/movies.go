@@ -68,3 +68,12 @@ func (m *Movies) IsEmptyRecommendations() bool {
 	}
 	return false
 }
+
+func (m *Movies) PrintRecomendationsDetails() {
+	for _, movie := range m.Recommendations {
+		fmt.Printf("Title: %s\n", movie.Title)
+		fmt.Printf("Vote Average: %.2f\n", movie.VoteAverage)
+		fmt.Printf("Genres: %s\n", movie.Genres)
+		fmt.Println("-----------------------------")
+	}
+}
