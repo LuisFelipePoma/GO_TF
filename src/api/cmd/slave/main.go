@@ -150,7 +150,7 @@ func GetSimilarMovies(movies []Movie, targetMovie Movie) []SimilarMovie {
 			}
 		}
 	}
-	fmt.Println("Processed in %s\n", time.Since(start))
+	fmt.Printf("Processed in %s\n", time.Since(start))
 	return result
 }
 

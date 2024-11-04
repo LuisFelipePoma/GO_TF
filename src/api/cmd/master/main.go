@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -166,7 +167,6 @@ func filterMoviesByGenre(movies []MovieResponse, genre string) []MovieResponse {
 }
 
 // OTHER
-
 func clearConsole() {
 	cmd := exec.Command("cmd", "/c", "cls")
 	cmd.Stdout = os.Stdout
@@ -233,7 +233,7 @@ func similarMoviesHandler(movieID int) []MovieResponse {
 	if len(combinedResults) > 10 {
 		combinedResults = combinedResults[:10]
 	}
-	
+
 	// Map similar movie IDs to movie details
 	var movieResponses []MovieResponse
 	for _, similarMovie := range combinedResults {
@@ -271,27 +271,26 @@ func splitRanges(totalMovies, numParts int) [][2]int {
 }
 
 func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]SimilarMovie, error) {
-	conn, err := net.Dial("tcp", node)
+	conn, err := net.DialTimeout("tcp", node, 15*time.Second)
 	if err != nil {
-		return nil, err
+		log.Printf("Error al conectar con el nodo %s: %v\n", node, err)
+		return reassignTask(struct {
+			Movies      []Movie `json:"movies"`
+			TargetMovie Movie   `json:"target_movie"`
+		}{
+			Movies:      movies[startIdx:endIdx],
+			TargetMovie: getMovieByID(movieID),
+		}, node)
 	}
 	defer conn.Close()
-
-	// get movie by id
-	var target Movie
-	for _, movie := range movies {
-		if movie.ID == movieID {
-			target = movie
-			break
-		}
-	}
 
 	task := struct {
 		Movies      []Movie `json:"movies"`
 		TargetMovie Movie   `json:"target_movie"`
 	}{
 		Movies:      movies[startIdx:endIdx],
-		TargetMovie: target}
+		TargetMovie: getMovieByID(movieID),
+	}
 
 	data, err := json.Marshal(task)
 	if err != nil {
@@ -300,12 +299,14 @@ func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]Sim
 
 	_, err = conn.Write(data)
 	if err != nil {
-		return nil, err
+		log.Printf("Error al enviar la tarea al nodo %s: %v\n", node, err)
+		return reassignTask(task, node)
 	}
 
 	response, err := io.ReadAll(conn)
 	if err != nil {
-		return nil, err
+		log.Printf("Error al leer la respuesta del nodo %s: %v\n", node, err)
+		return reassignTask(task, node)
 	}
 
 	var similarMovies []SimilarMovie
@@ -315,4 +316,56 @@ func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]Sim
 	}
 
 	return similarMovies, nil
+}
+
+func reassignTask(task interface{}, failedNode string) ([]SimilarMovie, error) {
+	for _, node := range slaveNodes {
+		if node != failedNode {
+			result, err := sendTaskToNode(node, task)
+			if err == nil {
+				return result, nil
+			}
+			log.Printf("Error al intentar reasignar al nodo %s: %v\n", node, err)
+		}
+	}
+	return nil, fmt.Errorf("no hay nodos disponibles para reasignar la tarea")
+}
+
+func sendTaskToNode(node string, task interface{}) ([]SimilarMovie, error) {
+	conn, err := net.DialTimeout("tcp", node, 3*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("error al conectar con el nodo %s: %v", node, err)
+	}
+	defer conn.Close()
+
+	data, err := json.Marshal(task)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = conn.Write(data)
+	if err != nil {
+		return nil, fmt.Errorf("error al enviar la tarea al nodo %s: %v", node, err)
+	}
+
+	response, err := io.ReadAll(conn)
+	if err != nil {
+		return nil, fmt.Errorf("error al leer la respuesta del nodo %s: %v", node, err)
+	}
+
+	var similarMovies []SimilarMovie
+	err = json.Unmarshal(response, &similarMovies)
+	if err != nil {
+		return nil, err
+	}
+
+	return similarMovies, nil
+}
+func getMovieByID(movieID int) Movie {
+	for _, movie := range movies {
+		if movie.ID == movieID {
+			return movie
+		}
+	}
+	return Movie{}
 }
