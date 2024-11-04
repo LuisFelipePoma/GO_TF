@@ -3,7 +3,7 @@ package Movies
 import (
 	"encoding/json"
 	"fmt"
-	"master/types"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/master/types"
 	"os"
 )
 

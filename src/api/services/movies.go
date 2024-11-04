@@ -1,12 +1,12 @@
 package services
 
 import (
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/tree/main/src/api/types"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/tree/main/src/api/master"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/master"
 )
 
 // Movies representa la estructura de las películas.

@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	m "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/tree/main/src/api/services"
+	m "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/services"
 	"os"
 	"os/exec"
 	"strings"
