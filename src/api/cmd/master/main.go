@@ -50,7 +50,6 @@ var slaveNodes = []string{
 	"localhost:8082",
 	"localhost:8083",
 	"localhost:8084",
-	// Agrega más nodos esclavos según sea necesario
 }
 
 var movies []Movie
@@ -197,11 +196,12 @@ func loadMovies(filePath string) error {
 
 func similarMoviesHandler(movieID int) []MovieResponse {
 	start := time.Now()
-
+	// Distribute the task to the slave nodes
 	numSlaves := len(slaveNodes)
 	ranges := splitRanges(len(movies), numSlaves)
-
+	// Create a goroutine for each slave node
 	var wg sync.WaitGroup
+	// Channel to receive the results from the slaves
 	results := make(chan []SimilarMovie, numSlaves)
 
 	for i, node := range slaveNodes {
@@ -214,22 +214,27 @@ func similarMoviesHandler(movieID int) []MovieResponse {
 			}
 		}(node, ranges[i][0], ranges[i][1], movieID)
 	}
-
+	// Wait for all goroutines to finish
 	wg.Wait()
 	close(results)
 
+	// Combine the results from all the slaves
 	var combinedResults []SimilarMovie
 	for result := range results {
 		combinedResults = append(combinedResults, result...)
 	}
 
+	// Sort the combined results by similarity
 	sort.Slice(combinedResults, func(i, j int) bool {
 		return combinedResults[i].Similarity > combinedResults[j].Similarity
 	})
+
+	// Limit the number of results to 10
 	if len(combinedResults) > 10 {
 		combinedResults = combinedResults[:10]
 	}
-
+	
+	// Map similar movie IDs to movie details
 	var movieResponses []MovieResponse
 	for _, similarMovie := range combinedResults {
 		for _, movie := range movies {
