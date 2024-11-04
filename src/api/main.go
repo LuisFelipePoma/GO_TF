@@ -1,9 +1,9 @@
 package main
 
 import (
-	m "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/services"
 	"bufio"
 	"fmt"
+	m "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/tree/main/src/api/services"
 	"os"
 	"os/exec"
 	"strings"
