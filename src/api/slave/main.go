@@ -29,8 +29,48 @@ type Movie struct {
 
 // SimilarMovie representa una película similar con su ID.
 type SimilarMovie struct {
-	ID int `json:"id"`
+	ID         int     `json:"id"`
 	Similarity float64 `json:"similarity"`
+}
+
+// MAIN
+func main() {
+	// Leer el puerto del usuario
+	port := ""
+	if len(os.Args) > 1 {
+		port = os.Args[1]
+	} else {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Enter port: ")
+		port, _ = reader.ReadString('\n')
+		port = strings.TrimSpace(port)
+
+		// Validar que el puerto sea un número válido
+		if _, err := strconv.Atoi(port); err != nil {
+			fmt.Println("Invalid port number")
+			return
+		}
+	}
+
+	// Iniciar el servidor TCP
+	ln, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		fmt.Println("Error starting TCP server:", err)
+		return
+	}
+	defer ln.Close()
+
+	fmt.Println("Slave node listening on port", port)
+
+	for {
+		// Aceptar conexiones entrantes
+		conn, err := ln.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection:", err)
+			continue
+		}
+		go handleConnection(conn)
+	}
 }
 
 // CosineSimilarity calcula la similitud del coseno entre dos vectores.
@@ -118,7 +158,6 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	fmt.Println("Reading data....")
-
 	// Decodificar el JSON recibido en una estructura Task
 	var task struct {
 		Movies      []Movie `json:"movies"`
@@ -129,7 +168,7 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("Error al decodificar JSON:", err)
 		return
 	}
-	fmt.Printf("Nodo Esclavo recibió tarea...")
+	fmt.Println("Nodo Esclavo recibió tarea...")
 
 	fmt.Println("Getting similar movies....")
 	// Obtener películas similares
@@ -144,44 +183,5 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("Error al codificar JSON:", err)
 		return
 	}
-	fmt.Printf("Nodo Esclavo envió resultado")
-}
-
-func main() {
-	// Leer el puerto del usuario
-	port := ""
-	if len(os.Args) > 1 {
-		port = os.Args[1]
-	} else {
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("Enter port: ")
-		port, _ = reader.ReadString('\n')
-		port = strings.TrimSpace(port)
-
-		// Validar que el puerto sea un número válido
-		if _, err := strconv.Atoi(port); err != nil {
-			fmt.Println("Invalid port number")
-			return
-		}
-	}
-
-	// Iniciar el servidor TCP
-	ln, err := net.Listen("tcp", ":"+port)
-	if err != nil {
-		fmt.Println("Error starting TCP server:", err)
-		return
-	}
-	defer ln.Close()
-
-	fmt.Println("Slave node listening on port", port)
-
-	for {
-		// Aceptar conexiones entrantes
-		conn, err := ln.Accept()
-		if err != nil {
-			fmt.Println("Error accepting connection:", err)
-			continue
-		}
-		go handleConnection(conn)
-	}
+	fmt.Println("Nodo Esclavo envió resultado")
 }
