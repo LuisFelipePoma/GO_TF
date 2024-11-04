@@ -3,20 +3,19 @@ package main
 import (
 	"bufio"
 	"fmt"
-	m "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/services"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-var moviesService = m.NewMovies()
+var nodeMasterPort = "localhost:8081"
+
+
 
 func main() {
-	// Leer el archivo JSON con las películas una vez
-	if err := moviesService.LoadMovies("../../database/data/data_clean.json"); err != nil {
-		fmt.Println("Error al leer el archivo JSON:", err)
-		return
-	}
+	// Create port to send option to master
+	port := "8080"
+	nodeMaster := net.
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -38,8 +37,8 @@ func main() {
 			title, _ := reader.ReadString('\n')
 			title = strings.TrimSpace(title)
 
-			moviesService.Recommendations, moviesService.LastRecomendation = moviesService.RecomendMoviesByTitle(title)
-			fmt.Println("Recomendaciones:")
+			moviesService.Recommendations, moviesService.LastRecomendation =
+				fmt.Println("Recomendaciones:")
 			moviesService.PrintRecomendationsDetails()
 
 		case 2:

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/master"
 )
 
 // Movies representa la estructura de las películas.
@@ -108,17 +107,4 @@ func (m *Movies) GetMoviesByVoteAverage(minVoteAverage float64) []types.MovieRes
 		}
 	}
 	return filteredMovies
-}
-
-func (m *Movies) RecomendMoviesByTitle(title string) ([]types.MovieResponse, string) {
-	
-	var response []types.MovieResponse
-	for _, movie := range m.Recommendations {
-		if strings.EqualFold(strings.ToLower(movie.Title), strings.ToLower(title)) {
-			// response = similarMoviesHandler(movie.ID)
-			response = nil
-			return response, movie.Title
-		}
-	}
-	return response, ""
 }
