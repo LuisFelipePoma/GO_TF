@@ -25,7 +25,9 @@ var moviesService = services.NewMovies()
 
 const TIMEOUT = 5 * time.Second
 const MAX_RETRIES = 3
-const RETRY_DELAY = 2 * time.Second
+
+// 500ms
+const RETRY_DELAY = 500 * time.Millisecond
 
 // ENTRYPOINT
 func main() {
