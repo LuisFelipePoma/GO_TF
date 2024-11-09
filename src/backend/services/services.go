@@ -41,7 +41,7 @@ func (m *Movies) LoadMovies(filePath string) error {
 // Get All Movies (n: number)
 func (m *Movies) GetAllMovies(n int) []types.Movie {
 	rand.Seed(uint64(time.Now().UnixNano())) // Seed the random number generator
-	
+
 	if n >= len(m.Movies) {
 		return m.Movies
 	}
@@ -65,6 +65,18 @@ func (m *Movies) GetMovieByID(movieID int) *types.Movie {
 		}
 	}
 	return nil
+}
+
+// GetMoviesBy Search
+func (m *Movies) GetMoviesBySearch(query string) []types.Movie {
+	var filteredMovies []types.Movie
+	for _, movie := range m.Movies {
+		data := movie.Actors + movie.Genres + movie.Title + movie.Keywords
+		if strings.Contains(strings.ToLower(data), strings.ToLower(query)) {
+			filteredMovies = append(filteredMovies, movie)
+		}
+	}
+	return filteredMovies
 }
 
 // GetMovieByTitle returns a movie by its title.

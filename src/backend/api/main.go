@@ -37,6 +37,8 @@ func main() {
 // Configurar los manejadores HTTP
 func setupRoutes() {
 	http.HandleFunc("/api/movies/similar", getSimilarMovies) // GET
+	http.HandleFunc("/api/movies/id", getById)               // GET
+	http.HandleFunc("/api/movies/search", getMoviesBySearch) // GET
 	http.HandleFunc("/api/movies", getAllMovies)             // GET
 }
 
@@ -68,6 +70,32 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response := moviesService.GetAllMovies(n)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func getById(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET /api/movies")
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		idStr = "1"
+	}
+	// Convert n to int
+	id, err := strconv.Atoi(idStr)
+
+	if err != nil {
+		http.Error(w, "Invalid number format", http.StatusBadRequest)
+		return
+	}
+	response := moviesService.GetMovieByID(id)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func getMoviesBySearch(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET /api/movies/search")
+	query := r.URL.Query().Get("query")
+	response := moviesService.GetMoviesBySearch(query)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
