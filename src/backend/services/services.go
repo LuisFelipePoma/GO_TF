@@ -3,7 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"os"
 	"strings"
 )

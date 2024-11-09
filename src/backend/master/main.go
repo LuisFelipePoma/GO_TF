@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/errors"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/services"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/utils"
+	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/errors"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/services"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/utils"
 )
 
 var slaveNodes = []string{

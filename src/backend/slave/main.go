@@ -7,8 +7,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/slave/model"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
 
 // Entry point of the program

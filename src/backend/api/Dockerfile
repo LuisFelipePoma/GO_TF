@@ -8,13 +8,10 @@ WORKDIR /app
 COPY . .
 
 # Descarga las dependencias del módulo Go
-RUN go mod download
+# RUN go mod download
 
 # Compila la aplicación
-RUN go build -o master .
-
-# Expone el puerto en el que la aplicación escuchará
-EXPOSE 8081
+RUN go build -o api .
 
 # Comando para ejecutar la aplicación
-CMD ["./master"]
+CMD ["./api"]

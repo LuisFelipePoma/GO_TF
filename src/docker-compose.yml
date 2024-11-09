@@ -1,7 +1,8 @@
 services:
+  # <--------------- NODOS
   master:
     build:
-      context: ./master
+      context: ./backend/master
       dockerfile: Dockerfile 
     environment:
       - NODE_NAME=master
@@ -10,6 +11,7 @@ services:
       - "8081:8081"
     networks:
       - slave_network
+      - app
     depends_on:
     - slave1
     - slave2
@@ -17,7 +19,7 @@ services:
 
   slave1:
     build:
-      context: ./slave
+      context: ./backend/slave
       dockerfile: Dockerfile 
     environment:
       - NODE_NAME=slave1
@@ -29,7 +31,7 @@ services:
 
   slave2:
     build:
-      context: ./slave
+      context: ./backend/slave
       dockerfile: Dockerfile
     environment:
       - NODE_NAME=slave2
@@ -41,7 +43,7 @@ services:
 
   slave3:
     build:
-      context: ./slave
+      context: ./backend/slave
       dockerfile: Dockerfile
     environment:
       - NODE_NAME=slave3
@@ -51,5 +53,20 @@ services:
     networks:
       - slave_network
 
+  # API ENDPOINT (BACKEND)
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - MASTER_NODE=8081
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    networks:
+      - app
+    depends_on:
+      - master
 networks:
   slave_network:
+  app:

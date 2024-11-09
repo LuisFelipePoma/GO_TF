@@ -1,8 +1,0 @@
-github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/errors v0.0.0-20241108043934-aca3d05448bc h1:0trp7ddWMqy6li7h91nq5IVmWQi6857RfDbRnnsnkzQ=
-github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/errors v0.0.0-20241108043934-aca3d05448bc/go.mod h1:Msn/zOJvh6bqKbVTH361zVd8NQ4yJMXQIZ1LTF/MxhE=
-github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/services v0.0.0-20241108043934-aca3d05448bc h1:DOZDcHpZn/Dw6p/QPgqXXePlxDdn9BzHuQ8i99OPaes=
-github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/services v0.0.0-20241108043934-aca3d05448bc/go.mod h1:z98k3NtJh8Dgnd3LOb0AAHqNr699Bk6ODcitBQy7xD0=
-github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types v0.0.0-20241108043934-aca3d05448bc h1:U00GsSqcoE2Ve3mNf4LeQJFhxVeNjUevKf8FnUuFfPA=
-github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types v0.0.0-20241108043934-aca3d05448bc/go.mod h1:vpaopzomG+a0Eqj23/Cvc0kbdA87kQIw533yc47TYVs=
-github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/utils v0.0.0-20241108043934-aca3d05448bc h1:xdouN4/c8GDc1Lu8E05ppIiIz6ZphmAQtvepWkWBB30=
-github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/utils v0.0.0-20241108043934-aca3d05448bc/go.mod h1:Y6V2w7iTvNCJrrNHqaVn3+oFHmZ5MAI70qcU5PE0drM=
