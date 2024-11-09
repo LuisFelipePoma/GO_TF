@@ -1,0 +1,55 @@
+services:
+  master:
+    build:
+      context: ./master
+      dockerfile: Dockerfile 
+    environment:
+      - NODE_NAME=master
+      - PORT=8081
+    ports:
+      - "8081:8081"
+    networks:
+      - slave_network
+    depends_on:
+    - slave1
+    - slave2
+    - slave3
+
+  slave1:
+    build:
+      context: ./slave
+      dockerfile: Dockerfile 
+    environment:
+      - NODE_NAME=slave1
+      - PORT=8082
+    ports:
+      - "8082:8082"
+    networks:
+      - slave_network
+
+  slave2:
+    build:
+      context: ./slave
+      dockerfile: Dockerfile
+    environment:
+      - NODE_NAME=slave2
+      - PORT=8083
+    ports:
+      - "8083:8083"
+    networks:
+      - slave_network
+
+  slave3:
+    build:
+      context: ./slave
+      dockerfile: Dockerfile
+    environment:
+      - NODE_NAME=slave3
+      - PORT=8084
+    ports:
+      - "8084:8084"
+    networks:
+      - slave_network
+
+networks:
+  slave_network:

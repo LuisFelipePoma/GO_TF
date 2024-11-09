@@ -1,3 +1,3 @@
-module github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api
+module api
 
-go 1.23.0
+go 1.23

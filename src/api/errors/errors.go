@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
 )
 
 func ReturnError(conn net.Conn, errMsg string) {
-	response := types.Response{
+	type ErrorResponse struct {
+		Error string `json:"error"`
+	}
+	response := ErrorResponse{
 		Error: errMsg,
 	}
 	encoder := json.NewEncoder(conn)
@@ -17,7 +19,7 @@ func ReturnError(conn net.Conn, errMsg string) {
 	}
 }
 
-func SendJSONResponse(conn net.Conn, data types.Response) error {
+func SendJSONResponse(conn net.Conn, data interface{}) error {
 	encoder := json.NewEncoder(conn)
 	if err := encoder.Encode(data); err != nil {
 		fmt.Println("Error al codificar JSON:", err)

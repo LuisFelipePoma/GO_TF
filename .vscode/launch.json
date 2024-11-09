@@ -16,7 +16,8 @@
 			"name": "Launch Slave 8084",
 			"type": "go",
 			"request": "launch",
-			"mode": "auto",
+			"console": "integratedTerminal",
+			"mode": "debug",
 			"program": "${workspaceFolder}/src/api/slave/main.go",
 			"args": [
 				"8084"
@@ -26,7 +27,8 @@
 			"name": "Launch Slave 8083",
 			"type": "go",
 			"request": "launch",
-			"mode": "auto",
+			"console": "integratedTerminal",
+			"mode": "debug",
 			"program": "${workspaceFolder}/src/api/slave/main.go",
 			"args": [
 				"8083"
@@ -36,7 +38,8 @@
 			"name": "Launch Slave 8082",
 			"type": "go",
 			"request": "launch",
-			"mode": "auto",
+			"console": "integratedTerminal",
+			"mode": "debug",
 			"program": "${workspaceFolder}/src/api/slave/main.go",
 			"args": [
 				"8082"

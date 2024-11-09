@@ -3,22 +3,24 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net"
+	"os"
+	"sort"
+	"sync"
+	"time"
+
 	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/errors"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/services"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/utils"
-	"io"
-	"log"
-	"net"
-	"sort"
-	"sync"
-	"time"
 )
 
 var slaveNodes = []string{
-	"localhost:8082",
-	"localhost:8083",
-	"localhost:8084",
+	"slave1:8082",
+	"slave2:8083",
+	"slave3:8084",
 }
 
 var moviesService = services.NewMovies()
@@ -31,19 +33,26 @@ const RETRY_DELAY = 500 * time.Millisecond
 
 // ENTRYPOINT
 func main() {
+	// Leer el puerto desde la variable de entorno
+	port := os.Getenv("PORT")
+	name := os.Getenv("NODE_NAME")
+	if port == "" {
+		log.Fatal("El puerto no está configurado en la variable de entorno PORT")
+	}
 	// Create a listener
-	listener, err := net.Listen("tcp", "localhost:8081")
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("Error al crear el servidor: %v", err)
 	}
 	defer listener.Close()
 
 	// Load the movies from JSON
-	err = moviesService.LoadMovies("../database/data/data_clean.json")
+	err = moviesService.LoadMovies("./movies.json")
 	if err != nil {
 		log.Fatalf("Error al cargar las películas: %v", err)
 	}
-
+	// LIstening
+	fmt.Printf("Nodo %s escuchando en el puerto %s\n", name, port)
 	// Start the server
 	for {
 		conn, err := listener.Accept()

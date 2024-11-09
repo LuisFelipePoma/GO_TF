@@ -1,35 +1,23 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/slave/model"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
+	"log"
 	"net"
 	"os"
-	"strconv"
-	"strings"
+
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/slave/model"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
 )
 
 // Entry point of the program
 func main() {
 	// Read port from command line arguments or stdin
-	port := ""
-	if len(os.Args) > 1 {
-		port = os.Args[1]
-	} else {
-		// If no port is provided, ask the user to enter it
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("Enter port: ")
-		port, _ = reader.ReadString('\n')
-		port = strings.TrimSpace(port)
-
-		// Validate port number
-		if _, err := strconv.Atoi(port); err != nil {
-			fmt.Println("Invalid port number")
-			return
-		}
+	port := os.Getenv("PORT")
+	name := os.Getenv("NODE_NAME")
+	if port == "" {
+		log.Fatal("El puerto no está configurado en la variable de entorno PORT")
 	}
 
 	// Initialize TCP server
@@ -39,7 +27,9 @@ func main() {
 		return
 	}
 	defer ln.Close()
-	fmt.Println("Slave node listening on port", port)
+	fmt.Printf("Slave %s listening on port %s\n", name, port)
+	// Show local addres
+	fmt.Println("Local address:", ln.Addr())
 
 	// Accept incoming connections
 	for {
