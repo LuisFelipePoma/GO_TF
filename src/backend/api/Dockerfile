@@ -1,5 +1,5 @@
 # Usa una imagen base de Golang
-FROM golang:1.17
+FROM golang:1.23
 
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
@@ -11,6 +11,7 @@ COPY . .
 # RUN go mod download
 
 # Compila la aplicación
+RUN go mod tidy
 RUN go build -o api .
 
 # Comando para ejecutar la aplicación

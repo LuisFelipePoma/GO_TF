@@ -10,7 +10,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
 	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/errors"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/utils"

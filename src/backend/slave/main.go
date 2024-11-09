@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"os"
-
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
