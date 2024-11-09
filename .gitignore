@@ -26,3 +26,5 @@ go.work.sum
 
 src/backend/database/raw/*.csv
 src/backend/database/data/*.csv
+
+.env.local

@@ -36,10 +36,26 @@ func main() {
 
 // Configurar los manejadores HTTP
 func setupRoutes() {
-	http.HandleFunc("/api/movies/similar", getSimilarMovies) // GET
-	http.HandleFunc("/api/movies/id", getById)               // GET
-	http.HandleFunc("/api/movies/search", getMoviesBySearch) // GET
-	http.HandleFunc("/api/movies", getAllMovies)             // GET
+	http.HandleFunc("/api/movies/similar", corsMiddleware(getSimilarMovies)) // GET
+	http.HandleFunc("/api/movies/id", corsMiddleware(getById))               // GET
+	http.HandleFunc("/api/movies/search", corsMiddleware(getMoviesBySearch)) // GET
+	http.HandleFunc("/api/movies", corsMiddleware(getAllMovies))             // GET
+}
+
+// Middleware para manejar CORS
+func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next(w, r)
+	}
 }
 
 // HANDLERS

@@ -1,15 +1,13 @@
 ---
+import ListMovies from "../components/ListMovies.astro";
 import Layout from "../layouts/Layout.astro";
----
+import moviesInfo from "../content/movies/movies.json";
 
+const movies = moviesInfo.sort(() => Math.random() - 0.5).slice(0, 50);
+---
 <Layout title="Movies Recomender">
   <div class="grid place-content-center place-items-center">
-    <header>
-      <h1>Movies Recomender</h1>
-    </header>
-    <section>
-		
-	</section>
+    <ListMovies movies={movies}/>
     <section></section>
     <section></section>
   </div>

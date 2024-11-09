@@ -45,14 +45,12 @@ func (m *Movies) GetAllMovies(n int) []types.Movie {
 	if n >= len(m.Movies) {
 		return m.Movies
 	}
-
 	randomMovies := make([]types.Movie, 0, n)
 	indices := rand.Perm(len(m.Movies))[:n]
 
 	for _, i := range indices {
 		randomMovies = append(randomMovies, m.Movies[i])
 	}
-
 	return randomMovies
 }
 
