@@ -41,7 +41,7 @@ func (m *Movies) LoadMovies(filePath string) error {
 // Get All Movies (n: number)
 func (m *Movies) GetAllMovies(n int) []types.Movie {
 	rand.Seed(uint64(time.Now().UnixNano())) // Seed the random number generator
-
+	
 	if n >= len(m.Movies) {
 		return m.Movies
 	}

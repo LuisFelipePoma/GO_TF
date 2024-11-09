@@ -42,6 +42,6 @@ type Response struct {
 
 // Request represents the structure of a request.
 type Request struct {
-	TargetMovie  Movie   `json:"movie"`
-	Movies []Movie `json:"movies"`
+	TargetMovie Movie   `json:"movie"`
+	Movies      []Movie `json:"movies"`
 }

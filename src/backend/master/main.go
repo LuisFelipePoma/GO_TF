@@ -71,7 +71,7 @@ func handleRequest(conn net.Conn) {
 		return
 	}
 	fmt.Println("Leyendo tarea....")
-	fmt.Printf("%+v\n", task)
+	fmt.Printf("Recomendacion para %+v\n", task.TargetMovie)
 
 	movieTarget = task.TargetMovie
 	movies = task.Movies

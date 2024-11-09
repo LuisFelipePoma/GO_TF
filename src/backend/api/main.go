@@ -19,6 +19,13 @@ var moviesService = services.NewMovies()
 func main() {
 	// Read
 	port := os.Getenv("PORT")
+	// Cargar Peliculas
+	err := moviesService.LoadMovies("movies.json")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	// Configurar los manejadores HTTP
 	setupRoutes()
 
@@ -55,6 +62,7 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	}
 	// Convert n to int
 	n, err := strconv.Atoi(nStr)
+
 	if err != nil {
 		http.Error(w, "Invalid number format", http.StatusBadRequest)
 		return
@@ -75,8 +83,8 @@ func handleMasterConection(data string) (types.Response, string) {
 	movie := moviesService.GetMovieByTitle(data)
 	// Create a request
 	request := types.Request{
-		TargetMovie:  *movie,
-		Movies: moviesService.Movies,
+		TargetMovie: *movie,
+		Movies:      moviesService.Movies,
 	}
 
 	// Serialize the request
