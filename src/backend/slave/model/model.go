@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/api/types"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"math"
 	"sort"
 	"strings"

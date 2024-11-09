@@ -3,12 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"io"
 	"net"
 	"net/http"
 	"os"
-
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
 
 var nodeMasterPort = os.Getenv("MASTER_NODE") // Port of the master node
@@ -20,7 +19,7 @@ func main() {
 	setupRoutes()
 
 	fmt.Println("Server is running on port ", port)
-	http.ListenAndServe("master:"+port, nil)
+	http.ListenAndServe(":"+port, nil)
 
 }
 
@@ -32,6 +31,7 @@ func setupRoutes() {
 // HANDLERS
 func getMovies(w http.ResponseWriter, r *http.Request) {
 	// Get title from args
+	fmt.Println("GET /api/movies/similar")
 	title := r.URL.Query().Get("title")
 	fmt.Println(title)
 	response, errorMessage := handleOption(1, title)
@@ -44,7 +44,8 @@ func getMovies(w http.ResponseWriter, r *http.Request) {
 
 // Conect to the master node
 func handleOption(option int, data string) (types.Response, string) {
-	conn, err := net.Dial("tcp", nodeMasterPort) // Connect to the master node
+	fmt.Println("Connecting to master node : ", "master:"+nodeMasterPort)
+	conn, err := net.Dial("tcp", "master:"+nodeMasterPort) // Connect to the master node
 	if err != nil {
 		return types.Response{}, "Error al conectar con el nodo maestro."
 	}

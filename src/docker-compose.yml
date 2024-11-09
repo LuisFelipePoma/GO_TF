@@ -56,7 +56,7 @@ services:
   # API ENDPOINT (BACKEND)
   api:
     build:
-      context: ./backend
+      context: ./backend/api
       dockerfile: Dockerfile
     environment:
       - MASTER_NODE=8081
