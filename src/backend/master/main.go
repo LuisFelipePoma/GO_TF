@@ -12,7 +12,6 @@ import (
 	"time"
 
 	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/errors"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/services"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/utils"
 )
@@ -23,7 +22,8 @@ var slaveNodes = []string{
 	"slave3:8084",
 }
 
-var moviesService = services.NewMovies()
+var movies = []types.Movie{}
+var movieTarget = types.Movie{}
 
 const TIMEOUT = 5 * time.Second
 const MAX_RETRIES = 3
@@ -46,12 +46,7 @@ func main() {
 	}
 	defer listener.Close()
 
-	// Load the movies from JSON
-	err = moviesService.LoadMovies("./movies.json")
-	if err != nil {
-		log.Fatalf("Error al cargar las películas: %v", err)
-	}
-	// LIstening
+	// Listening
 	fmt.Printf("Nodo %s escuchando en el puerto %s\n", name, port)
 	// Start the server
 	for {
@@ -79,99 +74,24 @@ func handleRequest(conn net.Conn) {
 	fmt.Println("Leyendo tarea....")
 	fmt.Printf("%+v\n", task)
 
-	// Process based ont the task OPTION
-	switch task.Option {
-	// CASE 1: Get similar movies based on one movie
-	case 1:
-		fmt.Println("Opcion 1")
-		movie := moviesService.GetMovieByTitle(task.Data) // Get the movie
-		if movie == nil {
-			fmt.Println("Película no encontrada")
-			Error.ReturnError(conn, "Película no encontrada")
-			return
-		}
-		// Process the task
-		response := similarMoviesHandler(movie.ID)
-		// Send the response
-		if err := Error.SendJSONResponse(conn, response); err != nil {
-			Error.ReturnError(conn, err.Error())
-			return
-		}
-		fmt.Println("Nodo Master envió resultado")
-	// CASE 2: Get the last recommendations made based on the last movie
-	case 2:
-		fmt.Println("Opcion 2")
-		recomendations := moviesService.Recommendations // Get the last recommendations
-		if recomendations == nil {
-			fmt.Println("No hay recomendaciones disponibles")
-			Error.ReturnError(conn, "No hay recomendaciones disponibles")
-			return
-		}
-		// Create the response
-		response := types.Response{
-			Error:         "",
-			MovieResponse: recomendations,
-			TargetMovie:   moviesService.LastRecomendation,
-		}
-		// Send the response
-		if err := Error.SendJSONResponse(conn, response); err != nil {
-			Error.ReturnError(conn, err.Error())
-			return
-		}
-		fmt.Println("Nodo Master envió resultado")
-
-	// CASE 3: Filter the recomendations by genre
-	case 3:
-		fmt.Println("Opcion 3")
-		genre := task.Data                                      // Get the genre from the task data
-		movies := moviesService.GetRecomendationsByGenre(genre) // Get the movies
-		if len(movies) == 0 {
-			fmt.Println("No se encontraron películas con el género especificado")
-			Error.ReturnError(conn, "No se encontraron películas con el género especificado")
-			return
-		}
-		// Create the response
-		response := types.Response{
-			Error:         "",
-			MovieResponse: movies,
-			TargetMovie:   moviesService.LastRecomendation,
-		}
-		// Send the response
-		if err := Error.SendJSONResponse(conn, response); err != nil {
-			Error.ReturnError(conn, err.Error())
-			return
-		}
-		fmt.Println("Nodo Master envió resultado")
-	// CASE 4: Filter the recomendations by vote average
-	case 4:
-		fmt.Println("Opcion 4")
-		voteAverage := task.Data
-		movies := moviesService.GetMoviesByVoteAverage(voteAverage)
-		if len(movies) == 0 {
-			fmt.Println("No se encontraron películas con el voteAverage especificado")
-			Error.ReturnError(conn, "No se encontraron películas con el voteAverage especificado")
-			return
-		}
-		response := types.Response{
-			Error:         "",
-			MovieResponse: movies,
-			TargetMovie:   moviesService.LastRecomendation,
-		}
-		if err := Error.SendJSONResponse(conn, response); err != nil {
-			Error.ReturnError(conn, err.Error())
-			return
-		}
-		fmt.Println("Nodo Master envió resultado")
-
+	movieTarget = task.TargetMovie
+	movies = task.Movies
+	// Process the task
+	response := similarMoviesHandler(movieTarget)
+	// Send the response
+	if err := Error.SendJSONResponse(conn, response); err != nil {
+		Error.ReturnError(conn, err.Error())
+		return
 	}
+	fmt.Println("Nodo Master envió resultado")
 }
 
 // SimilarMoviesHandler returns a list of similar movies based
-func similarMoviesHandler(movieID int) types.Response {
+func similarMoviesHandler(movie types.Movie) types.Response {
 	start := time.Now() // Start the timer
 	// Distribute the task to the slave nodes
 	numSlaves := len(slaveNodes)
-	ranges := utils.SplitRanges(len(moviesService.Movies), numSlaves)
+	ranges := utils.SplitRanges(len(movies), numSlaves)
 	// Create a goroutine for each slave node
 	var wg sync.WaitGroup
 	// Channel to receive the results from the slaves
@@ -181,13 +101,13 @@ func similarMoviesHandler(movieID int) types.Response {
 		wg.Add(1)
 		go func(node string, startIdx, endIdx, movieID int) {
 			defer wg.Done()
-			result, err := getSimilarMoviesFromNode(node, startIdx, endIdx, movieID)
+			result, err := getSimilarMoviesFromNode(node, startIdx, endIdx)
 			if err == nil {
 				results <- result
 			} else {
 				fmt.Println(err)
 			}
-		}(node, ranges[i][0], ranges[i][1], movieID)
+		}(node, ranges[i][0], ranges[i][1], movie.ID)
 	}
 	// Wait for all goroutines to finish
 	wg.Wait()
@@ -212,7 +132,7 @@ func similarMoviesHandler(movieID int) types.Response {
 	// Map similar movie IDs to movie details
 	var movieResponses []types.MovieResponse
 	for _, similarMovie := range combinedResults {
-		for _, movie := range moviesService.Movies {
+		for _, movie := range movies {
 			if movie.ID == similarMovie.ID {
 				movieResponses = append(movieResponses, types.MovieResponse{
 					ID:          similarMovie.ID,
@@ -232,15 +152,14 @@ func similarMoviesHandler(movieID int) types.Response {
 	response := types.Response{
 		Error:         "",
 		MovieResponse: movieResponses,
-		TargetMovie:   moviesService.GetMovieByID(movieID).Title,
+		TargetMovie:   movieTarget.Title,
 	}
-	moviesService.Recommendations = movieResponses // Save the recommendations
 	fmt.Printf("Request processed in %s\n", time.Since(start))
 	return response
 }
 
 // Get the similar movies from a slave node
-func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]types.SimilarMovie, error) {
+func getSimilarMoviesFromNode(node string, startIdx, endIdx int) ([]types.SimilarMovie, error) {
 	// Connect to the slave node
 	var conn net.Conn
 	var err error
@@ -259,12 +178,9 @@ func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]typ
 	if err != nil {
 		log.Printf("Error al conectar con el nodo %s\n", node)
 		// Reassign the task to another node
-		return reassignTask(struct {
-			Movies      []types.Movie `json:"movies"`
-			TargetMovie types.Movie   `json:"target_movie"`
-		}{
-			Movies:      moviesService.Movies[startIdx:endIdx],
-			TargetMovie: *moviesService.GetMovieByID(movieID),
+		return reassignTask(types.Request{
+			Movies:      movies[startIdx:endIdx],
+			TargetMovie: movieTarget,
 		}, node)
 	}
 	defer conn.Close()
@@ -273,12 +189,9 @@ func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]typ
 	fmt.Printf("-- Enviando tarea al nodo %s --\n", node)
 
 	// Create the task
-	task := struct {
-		Movies      []types.Movie `json:"movies"`
-		TargetMovie types.Movie   `json:"target_movie"`
-	}{
-		Movies:      moviesService.Movies[startIdx:endIdx],
-		TargetMovie: *moviesService.GetMovieByID(movieID),
+	task := types.Request{
+		Movies: movies[startIdx:endIdx],
+		TargetMovie:  movieTarget,
 	}
 
 	// Send the task to the node
@@ -310,9 +223,6 @@ func getSimilarMoviesFromNode(node string, startIdx, endIdx, movieID int) ([]typ
 	if err != nil {
 		return nil, err
 	}
-
-	// Save the last recommendation
-	moviesService.LastRecomendation = moviesService.GetMovieByID(movieID).Title
 	return similarMovies, nil
 }
 

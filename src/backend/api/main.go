@@ -3,14 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"strconv"
+
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/services"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
 
 var nodeMasterPort = os.Getenv("MASTER_NODE") // Port of the master node
+var moviesService = services.NewMovies()
 
 func main() {
 	// Read
@@ -25,16 +29,17 @@ func main() {
 
 // Configurar los manejadores HTTP
 func setupRoutes() {
-	http.HandleFunc("/api/movies/similar", getMovies)
+	http.HandleFunc("/api/movies/similar", getSimilarMovies) // GET
+	http.HandleFunc("/api/movies", getAllMovies)             // GET
 }
 
 // HANDLERS
-func getMovies(w http.ResponseWriter, r *http.Request) {
-	// Get title from args
+func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET /api/movies/similar")
+	// Get title from args
+
 	title := r.URL.Query().Get("title")
-	fmt.Println(title)
-	response, errorMessage := handleOption(1, title)
+	response, errorMessage := handleMasterConection(title)
 	if errorMessage != "" {
 		fmt.Println(errorMessage)
 	}
@@ -42,19 +47,36 @@ func getMovies(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func getAllMovies(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET /api/movies")
+	nStr := r.URL.Query().Get("n")
+	if nStr == "" {
+		nStr = "10"
+	}
+	// Convert n to int
+	n, err := strconv.Atoi(nStr)
+	if err != nil {
+		http.Error(w, "Invalid number format", http.StatusBadRequest)
+		return
+	}
+	response := moviesService.GetAllMovies(n)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 // Conect to the master node
-func handleOption(option int, data string) (types.Response, string) {
-	fmt.Println("Connecting to master node : ", "master:"+nodeMasterPort)
+func handleMasterConection(data string) (types.Response, string) {
 	conn, err := net.Dial("tcp", "master:"+nodeMasterPort) // Connect to the master node
 	if err != nil {
 		return types.Response{}, "Error al conectar con el nodo maestro."
 	}
 	defer conn.Close()
 
+	movie := moviesService.GetMovieByTitle(data)
 	// Create a request
 	request := types.Request{
-		Option: option,
-		Data:   data,
+		TargetMovie:  *movie,
+		Movies: moviesService.Movies,
 	}
 
 	// Serialize the request

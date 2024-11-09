@@ -3,9 +3,12 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
+	"golang.org/x/exp/rand"
 )
 
 // Movies represents the structure of the movies service.
@@ -33,6 +36,24 @@ func (m *Movies) LoadMovies(filePath string) error {
 	}
 
 	return nil
+}
+
+// Get All Movies (n: number)
+func (m *Movies) GetAllMovies(n int) []types.Movie {
+	rand.Seed(uint64(time.Now().UnixNano())) // Seed the random number generator
+
+	if n >= len(m.Movies) {
+		return m.Movies
+	}
+
+	randomMovies := make([]types.Movie, 0, n)
+	indices := rand.Perm(len(m.Movies))[:n]
+
+	for _, i := range indices {
+		randomMovies = append(randomMovies, m.Movies[i])
+	}
+
+	return randomMovies
 }
 
 // GetMovieByTitle returns a movie by its id.
