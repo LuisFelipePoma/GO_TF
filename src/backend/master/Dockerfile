@@ -9,7 +9,9 @@ COPY . .
 
 # Descarga las dependencias del módulo Go
 RUN go mod download
+RUN go get -u ./...
 RUN go mod tidy
+#Update dependencies
 # Compila la aplicación
 RUN go build -o master .
 

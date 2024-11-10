@@ -34,6 +34,7 @@ func (m *Movies) LoadMovies(filePath string) error {
 	if err := json.Unmarshal(data, &m.Movies); err != nil {
 		return fmt.Errorf("error deserializing JSON: %w", err)
 	}
+	fmt.Print("Loaded movies\n", m.Movies[0])
 
 	return nil
 }
