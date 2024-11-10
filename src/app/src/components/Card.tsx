@@ -75,7 +75,9 @@ const Card: React.FC<CardProps> = ({ movie, children }) => {
       ) : (
         <div className='overflow-hidden w-[200px] h-[300px] rounded-md'>
           <img
-            className='w-full h-full object-cover transition-transform duration-500 ease-in-out transform group-hover:scale-100 scale-110'
+            className='w-full h-full object-cover transition-all duration-1000 ease-in-out transform group-hover:scale-100 scale-110
+            filter grayscale-[60%] group-hover:grayscale-[25%]
+            '
             src={posterPath}
             alt={movie.title}
           />
