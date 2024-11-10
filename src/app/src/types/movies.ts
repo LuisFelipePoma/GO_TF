@@ -10,6 +10,7 @@ export interface Movie {
   title?: string
   imdb_id?: string
   vote_average?: number
+	poster_path?: string
 }
 
 export interface Movies {

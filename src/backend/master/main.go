@@ -16,9 +16,9 @@ import (
 )
 
 var slaveNodes = []string{
-	"slave1:8082",
-	"slave2:8083",
-	"slave3:8084",
+	":8082",
+	":8083",
+	":8084",
 }
 
 var movies = []types.Movie{}
@@ -124,8 +124,8 @@ func similarMoviesHandler(movie types.Movie) types.Response {
 	})
 
 	// Limit the number of results to 10
-	if len(combinedResults) > 10 {
-		combinedResults = combinedResults[:10]
+	if len(combinedResults) > 20 {
+		combinedResults = combinedResults[:20]
 	}
 
 	// Map similar movie IDs to movie details

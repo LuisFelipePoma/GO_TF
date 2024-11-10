@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"log"
 	"net"
 	"os"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
 
 // Entry point of the program
@@ -47,10 +47,8 @@ func handleConnection(conn net.Conn) {
 
 	fmt.Println("Leyendo los datos entrantes....")
 	// Decodificate the JSON data
-	var task struct {
-		Movies      []types.Movie `json:"movies"`
-		TargetMovie types.Movie   `json:"target_movie"`
-	}
+	var task types.Request
+
 	decoder := json.NewDecoder(conn) // Create a JSON decoder that reads from
 	// Parse the JSON data
 	if err := decoder.Decode(&task); err != nil {

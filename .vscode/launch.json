@@ -10,29 +10,12 @@
 			"request": "launch",
 			"console": "integratedTerminal",
 			"mode": "debug",
-			"program": "${workspaceFolder}/src/api/master/main.go",
-		},
-		{
-			"name": "Launch Slave 8084",
-			"type": "go",
-			"request": "launch",
-			"console": "integratedTerminal",
-			"mode": "debug",
-			"program": "${workspaceFolder}/src/api/slave/main.go",
-			"args": [
-				"8084"
-			]
-		},
-		{
-			"name": "Launch Slave 8083",
-			"type": "go",
-			"request": "launch",
-			"console": "integratedTerminal",
-			"mode": "debug",
-			"program": "${workspaceFolder}/src/api/slave/main.go",
-			"args": [
-				"8083"
-			]
+			"program": "${workspaceFolder}/src/backend/master/main.go",
+			// Add env varialbe
+			"env": {
+				"NODE_NAME": "master",
+				"PORT": "8081"
+			}
 		},
 		{
 			"name": "Launch Slave 8082",
@@ -40,10 +23,47 @@
 			"request": "launch",
 			"console": "integratedTerminal",
 			"mode": "debug",
-			"program": "${workspaceFolder}/src/api/slave/main.go",
-			"args": [
-				"8082"
-			]
-		}
+			"program": "${workspaceFolder}/src/backend/slave/main.go",
+			"env": {
+				"NODE_NAME": "slave1",
+				"PORT": "8082"
+			}
+		},
+		{
+			"name": "Launch Slave 8083",
+			"type": "go",
+			"request": "launch",
+			"console": "integratedTerminal",
+			"mode": "debug",
+			"program": "${workspaceFolder}/src/backend/slave/main.go",
+			"env": {
+				"NODE_NAME": "slave2",
+				"PORT": "8083"
+			}
+		},
+		{
+			"name": "Launch Slave 8084",
+			"type": "go",
+			"request": "launch",
+			"console": "integratedTerminal",
+			"mode": "debug",
+			"program": "${workspaceFolder}/src/backend/slave/main.go",
+			"env": {
+				"NODE_NAME": "slave3",
+				"PORT": "8084"
+			}
+		},
+		{
+			"name": "Launch API",
+			"type": "go",
+			"request": "launch",
+			"console": "integratedTerminal",
+			"mode": "debug",
+			"program": "${workspaceFolder}/src/backend/api/main.go",
+			"env": {
+				"MASTER_NODE": "8081",
+				"PORT": "3000"
+			}
+		},
 	]
 }

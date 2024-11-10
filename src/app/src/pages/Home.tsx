@@ -11,7 +11,7 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     setLoading(true)
-    getAllMovies(150).then(data => {
+    getAllMovies(100).then(data => {
       setMovies(data)
       setLoading(false)
     })
