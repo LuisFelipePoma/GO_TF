@@ -120,7 +120,7 @@ func getMoviesBySearch(w http.ResponseWriter, r *http.Request) {
 
 // Conect to the master node
 func handleMasterConection(data string) (types.Response, string) {
-	conn, err := net.Dial("tcp", ":"+nodeMasterPort) // Connect to the master node
+	conn, err := net.Dial("tcp", "master:"+nodeMasterPort) // Connect to the master node
 	if err != nil {
 		return types.Response{}, "Error al conectar con el nodo maestro."
 	}

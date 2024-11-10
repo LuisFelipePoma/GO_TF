@@ -16,9 +16,9 @@ import (
 )
 
 var slaveNodes = []string{
-	":8082",
-	":8083",
-	":8084",
+	"slave1:8082",
+	"slave2:8083",
+	"slave3:8084",
 }
 
 var movies = []types.Movie{}
