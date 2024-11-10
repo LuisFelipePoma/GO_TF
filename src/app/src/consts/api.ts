@@ -5,3 +5,6 @@ export const URL_IMG = (tmdb_path_img: string) =>
 
 export const URL_TMDB = (id: number) =>
   `https://api.themoviedb.org/3/movie/${id}`
+
+
+export const API_TMDB = import.meta.env.VITE_API_TMDB

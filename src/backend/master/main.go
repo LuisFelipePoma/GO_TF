@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/errors"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/utils"
 	"io"
 	"log"
 	"net"
@@ -10,9 +13,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/errors"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/utils"
 )
 
 var slaveNodes = []string{
@@ -142,6 +142,8 @@ func similarMoviesHandler(movie types.Movie) types.Response {
 					Genres:      movie.Genres,
 					ImdbId:      movie.ImdbId,
 					VoteAverage: movie.VoteAverage,
+					PosterPath:  movie.PosterPath,
+					Overview:    movie.Overview,
 				})
 				break
 			}
@@ -189,8 +191,8 @@ func getSimilarMoviesFromNode(node string, startIdx, endIdx int) ([]types.Simila
 
 	// Create the task
 	task := types.Request{
-		Movies: movies[startIdx:endIdx],
-		TargetMovie:  movieTarget,
+		Movies:      movies[startIdx:endIdx],
+		TargetMovie: movieTarget,
 	}
 
 	// Send the task to the node

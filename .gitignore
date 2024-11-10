@@ -28,3 +28,5 @@ src/backend/database/raw/*.csv
 src/backend/database/data/*.csv
 
 .env.local
+
+src/app/node_modules

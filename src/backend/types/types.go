@@ -13,6 +13,7 @@ type Movie struct {
 	Title       string  `json:"title"`
 	ImdbId      string  `json:"imdb_id"`
 	VoteAverage float64 `json:"vote_average"`
+	PosterPath  string  `json:"poster_path"`
 }
 
 // SimilarMovie represents the structure of a similar movie.
@@ -31,6 +32,8 @@ type MovieResponse struct {
 	Genres      string  `json:"genres"`
 	ImdbId      string  `json:"imdb_id"`
 	VoteAverage float64 `json:"vote_average"`
+	PosterPath  string  `json:"poster_path"`
+	Overview    string  `json:"overview"`
 }
 
 // Response represents the structure of a response.

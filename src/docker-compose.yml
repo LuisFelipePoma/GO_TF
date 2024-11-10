@@ -72,9 +72,9 @@ services:
       context: ./app
       dockerfile: Dockerfile
     environment:
-      - API_URL=http://localhost:4321
+      - API_URL=http://localhost:5173
     ports:
-      - "4321:4321"
+      - "5173:5173"
     networks:
       - app
     depends_on:
