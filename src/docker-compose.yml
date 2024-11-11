@@ -7,6 +7,9 @@ services:
     environment:
       - NODE_NAME=master
       - PORT=8081
+      - SLAVE1=slave1:8082
+      - SLAVE2=slave2:8083
+      - SLAVE3=slave3:8084
     ports:
       - "8081:8081"
     networks:
@@ -59,7 +62,7 @@ services:
       context: ./backend/api
       dockerfile: Dockerfile
     environment:
-      - MASTER_NODE=8081
+      - MASTER_NODE=master:8081
       - PORT=3000
     ports:
       - "3000:3000"

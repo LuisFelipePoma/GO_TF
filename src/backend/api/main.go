@@ -3,30 +3,19 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"io"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
-
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/services"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
 
 var nodeMasterPort = os.Getenv("MASTER_NODE") // Port of the master node
-var moviesService = services.NewMovies()
 
 func main() {
 	// Read
 	port := os.Getenv("PORT")
-	// Cargar Peliculas
-	err := moviesService.LoadMovies("movies.json")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	// fmt.Println("Movies loaded : ", moviesService.Movies[0])
 
 	// Configurar los manejadores HTTP
 	setupRoutes()
@@ -50,12 +39,10 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-
 		next(w, r)
 	}
 }
@@ -64,9 +51,97 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET /api/movies/similar")
 	// Get title from args
-
 	title := r.URL.Query().Get("title")
-	response, errorMessage := handleMasterConection(title)
+	quantity := r.URL.Query().Get("n")
+
+	// handle errors
+	if title == "" {
+		http.Error(w, "Title is required", http.StatusBadRequest)
+		return
+	}
+
+	if quantity == "" {
+		http.Error(w, "Quantity is required", http.StatusBadRequest)
+		return
+	}
+	// Convert quantity to int
+	quantityInt, err := strconv.Atoi(quantity)
+	if err != nil {
+		http.Error(w, "Invalid quantity format", http.StatusBadRequest)
+		return
+	}
+
+	// Create a request
+	request := types.TaskDistributed{
+		Type: types.TaskRecomend,
+		Data: types.TaskData{
+			Quantity: quantityInt,
+			TaskRecomendations: &types.TaskRecomendations{
+				Title: title,
+			},
+		},
+	}
+	// Handle the connection to the master node
+	response, errorMessage := handleMasterConection(request)
+	if errorMessage != "" {
+		fmt.Println(errorMessage)
+	}
+	// Send the response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func getAllMovies(w http.ResponseWriter, r *http.Request) {
+	// fmt.Println("GET /api/movies")
+	// nStr := r.URL.Query().Get("n")
+	// if nStr == "" {
+	// 	nStr = "10"
+	// }
+	// // Convert n to int
+	// n, err := strconv.Atoi(nStr)
+
+	// if err != nil {
+	// 	http.Error(w, "Invalid number format", http.StatusBadRequest)
+	// 	return
+	// }
+	// response := err
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(response)
+}
+
+func getById(w http.ResponseWriter, r *http.Request) {
+	// fmt.Println("GET /api/movies")
+	// idStr := r.URL.Query().Get("id")
+	// if idStr == "" {
+	// 	idStr = "1"
+	// }
+	// // Convert n to int
+	// id, err := strconv.Atoi(idStr)
+
+	// if err != nil {
+	// 	http.Error(w, "Invalid number format", http.StatusBadRequest)
+	// 	return
+	// }
+	// response := err
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(response)
+}
+
+func getMoviesBySearch(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET /api/movies/search")
+	query := r.URL.Query().Get("query")
+	// Create a request
+	request := types.TaskDistributed{
+		Type: types.TaskSearch,
+		Data: types.TaskData{
+			TaskSearch: &types.TaskMasterSearch{
+				Query: query,
+			},
+		},
+	}
+
+	// Handle the connection to the master node
+	response, errorMessage := handleMasterConection(request)
 	if errorMessage != "" {
 		fmt.Println(errorMessage)
 	}
@@ -74,67 +149,15 @@ func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func getAllMovies(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("GET /api/movies")
-	nStr := r.URL.Query().Get("n")
-	if nStr == "" {
-		nStr = "10"
-	}
-	// Convert n to int
-	n, err := strconv.Atoi(nStr)
-
-	if err != nil {
-		http.Error(w, "Invalid number format", http.StatusBadRequest)
-		return
-	}
-	response := moviesService.GetAllMovies(n)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func getById(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("GET /api/movies")
-	idStr := r.URL.Query().Get("id")
-	if idStr == "" {
-		idStr = "1"
-	}
-	// Convert n to int
-	id, err := strconv.Atoi(idStr)
-
-	if err != nil {
-		http.Error(w, "Invalid number format", http.StatusBadRequest)
-		return
-	}
-	response := moviesService.GetMovieByID(id)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func getMoviesBySearch(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("GET /api/movies/search")
-	query := r.URL.Query().Get("query")
-	response := moviesService.GetMoviesBySearch(query)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
 // Conect to the master node
-func handleMasterConection(data string) (types.Response, string) {
-	conn, err := net.Dial("tcp", "master:"+nodeMasterPort) // Connect to the master node
+func handleMasterConection(taskMaster types.TaskDistributed) (types.Response, string) {
+	conn, err := net.Dial("tcp", nodeMasterPort) // Connect to the master node
 	if err != nil {
 		return types.Response{}, "Error al conectar con el nodo maestro."
 	}
 	defer conn.Close()
 
-	movie := moviesService.GetMovieByTitle(data)
-	// Create a request
-	request := types.Request{
-		TargetMovie: *movie,
-		Movies:      moviesService.Movies,
-	}
-
-	// Serialize the request
-	requestBytes, err := json.Marshal(request)
+	requestBytes, err := json.Marshal(taskMaster)
 	if err != nil {
 		return types.Response{}, "Error al serializar la petición."
 	}
@@ -145,6 +168,21 @@ func handleMasterConection(data string) (types.Response, string) {
 		return types.Response{}, "Error al enviar la petición."
 	}
 
+	// Receive and deserialize the response
+	response, errMsg := receiveAndDeserializeResponse(conn)
+	if errMsg != "" {
+		return types.Response{}, errMsg
+	}
+
+	// Check if there are no recomendations
+	if len(response.MovieResponse) == 0 {
+		return types.Response{}, "No se encontraron recomendaciones."
+	}
+
+	return response, ""
+}
+
+func receiveAndDeserializeResponse(conn net.Conn) (types.Response, string) {
 	// Receive the response
 	responseBytes, err := io.ReadAll(conn)
 	if err != nil {
@@ -161,11 +199,6 @@ func handleMasterConection(data string) (types.Response, string) {
 	// Check if there was an error
 	if response.Error != "" {
 		return types.Response{}, response.Error
-	}
-
-	// Check if there are no recomendations
-	if len(response.MovieResponse) == 0 {
-		return types.Response{}, "No se encontraron recomendaciones."
 	}
 
 	return response, ""

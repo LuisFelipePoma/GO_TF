@@ -16,12 +16,6 @@ type Movie struct {
 	PosterPath  string  `json:"poster_path"`
 }
 
-// SimilarMovie represents the structure of a similar movie.
-type SimilarMovie struct {
-	ID         int     `json:"id"`
-	Similarity float64 `json:"similarity"`
-}
-
 // MovieResponse represents the structure of a movie response.
 type MovieResponse struct {
 	ID          int     `json:"id"`
@@ -34,6 +28,7 @@ type MovieResponse struct {
 	VoteAverage float64 `json:"vote_average"`
 	PosterPath  string  `json:"poster_path"`
 	Overview    string  `json:"overview"`
+	Similarity  float64 `json:"similarity"`
 }
 
 // Response represents the structure of a response.
@@ -43,8 +38,35 @@ type Response struct {
 	TargetMovie   string          `json:"target_movie"`
 }
 
-// Request represents the structure of a request.
-type Request struct {
+// DATA TASK
+type TaskType string
+
+const (
+	TaskNone     TaskType = ""
+	TaskRecomend TaskType = "Recommend"
+	TaskSearch   TaskType = "SearchQuery"
+	TaskGet      TaskType = "GetNMovies"
+	TaskFind     TaskType = "FindXMovie"
+)
+
+type TaskDistributed struct {
+	Type TaskType `json:"type"`
+	Data TaskData `json:"data"`
+}
+
+type TaskData struct {
+	TaskRecomendations *TaskRecomendations `json:"recomendations,omitempty"`
+	TaskSearch         *TaskMasterSearch   `json:"search,omitempty"`
+	Quantity           int                 `json:"quantity"`
+}
+
+type TaskRecomendations struct {
+	Title                 string              `json:"title"`
 	TargetMovie Movie   `json:"movie"`
 	Movies      []Movie `json:"movies"`
+}
+
+type TaskMasterSearch struct {
+	Query  string  `json:"query"`
+	Movies []Movie `json:"movies"`
 }

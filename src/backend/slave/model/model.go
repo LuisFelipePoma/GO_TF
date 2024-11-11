@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"math"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -53,14 +52,16 @@ func (r *Recommender) GetFeatureVector(features string) map[string]float64 {
 }
 
 // GetSimilarMovies returns a list of similar movies to a target movie.
-func (r *Recommender) GetSimilarMovies(movies []types.Movie, targetMovie types.Movie) []types.SimilarMovie {
+func (r *Recommender) GetSimilarMovies(movies []types.Movie, targetMovie types.Movie) []types.MovieResponse {
 	start := time.Now()
 	// Get the feature vector of the target movie
 	targetFeatures := r.GetFeatureVector(targetMovie.Keywords + ", " + targetMovie.Characters + ", " + targetMovie.Actors + ", " + targetMovie.Director + ", " + targetMovie.Crew + ", " + targetMovie.Genres + ", " + targetMovie.Overview)
-	similarities := make(map[int]float64) // Create a map to store the similarities
+	similarities := make(map[int]types.MovieResponse) // Create a map to store the similarities
 
 	var mu sync.Mutex
 	var wg sync.WaitGroup
+
+	upperSimilarity := 0.0
 
 	for _, movie := range movies {
 		// If the movie is not the target movie, calculate the similarity
@@ -72,7 +73,22 @@ func (r *Recommender) GetSimilarMovies(movies []types.Movie, targetMovie types.M
 				features := r.GetFeatureVector(movie.Keywords + ", " + movie.Characters + ", " + movie.Actors + ", " + movie.Director + ", " + movie.Crew + ", " + movie.Genres + ", " + movie.Overview)
 				similarity := r.CosineSimilarity(targetFeatures, features)
 				mu.Lock()
-				similarities[movie.ID] = similarity // Store the similarity in the map
+				similarities[movie.ID] = types.MovieResponse{
+					ID:          movie.ID,
+					Title:       movie.Title,
+					Characters:  movie.Characters,
+					Actors:      movie.Actors,
+					Director:    movie.Director,
+					Genres:      movie.Genres,
+					ImdbId:      movie.ImdbId,
+					VoteAverage: movie.VoteAverage,
+					PosterPath:  movie.PosterPath,
+					Overview:    movie.Overview,
+					Similarity:  similarity,
+				}
+				if similarity > upperSimilarity {
+					upperSimilarity = similarity
+				}
 				mu.Unlock()
 			}(movie)
 		}
@@ -80,27 +96,17 @@ func (r *Recommender) GetSimilarMovies(movies []types.Movie, targetMovie types.M
 	// Wait for all goroutines to finish
 	wg.Wait()
 
-	var sortedMovies []types.SimilarMovie // Create a slice
-	// Store the movieID and similarity in
-	for movieID, similarity := range similarities {
-		sortedMovies = append(sortedMovies, types.SimilarMovie{ID: movieID, Similarity: similarity})
-	}
-
-	// Sort the movies by similarity
-	sort.Slice(sortedMovies, func(i, j int) bool {
-		return sortedMovies[i].Similarity > sortedMovies[j].Similarity
-	})
-
-	// Map the sortedMovies to a slice of SimilarMovie for the response
-	var result []types.SimilarMovie
-	for _, movie := range sortedMovies {
-		for _, m := range movies {
-			if m.ID == movie.ID {
-				result = append(result, types.SimilarMovie{ID: m.ID, Similarity: movie.Similarity})
-				break
-			}
+	// filter movies with more than 0.5 of similarity
+	var filterMovies []types.MovieResponse // Create a slice
+	for _, movie := range similarities {
+		// normarlize similiarity
+		movie.Similarity = movie.Similarity / upperSimilarity
+		if movie.Similarity > 0.35 {
+			filterMovies = append(filterMovies, movie)
 		}
 	}
-	fmt.Printf("Processed in %s\n", time.Since(start))
-	return result
+
+	fmt.Printf("Se obtuvieron %d peliculas similares\n", len(filterMovies))
+	fmt.Printf("Procesado en %s\n", time.Since(start))
+	return filterMovies
 }

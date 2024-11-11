@@ -14,7 +14,10 @@
 			// Add env varialbe
 			"env": {
 				"NODE_NAME": "master",
-				"PORT": "8081"
+				"PORT": "8081",
+				"SLAVE1": ":8082",
+				"SLAVE2": ":8083",
+				"SLAVE3": ":8084",
 			}
 		},
 		{
@@ -61,7 +64,7 @@
 			"mode": "debug",
 			"program": "${workspaceFolder}/src/backend/api/main.go",
 			"env": {
-				"MASTER_NODE": "8081",
+				"MASTER_NODE": ":8081",
 				"PORT": "3000"
 			}
 		},

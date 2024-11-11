@@ -3,12 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"log"
 	"net"
 	"os"
+	"sort"
+	"strings"
+	"sync"
+
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
+
+var recommender = model.NewRecommender() // Create a new recommender instance
 
 // Entry point of the program
 func main() {
@@ -41,35 +47,132 @@ func main() {
 	}
 }
 
+var dictFunction = map[types.TaskType]func(types.TaskDistributed) []types.MovieResponse{
+	types.TaskRecomend: getSimilarMovies,
+	types.TaskSearch:   getMoviesSearch,
+}
+
 // handleConnection handles incoming connections
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	fmt.Println("Leyendo los datos entrantes....")
 	// Decodificate the JSON data
-	var task types.Request
+	var taskMaster types.TaskDistributed
 
 	decoder := json.NewDecoder(conn) // Create a JSON decoder that reads from
 	// Parse the JSON data
-	if err := decoder.Decode(&task); err != nil {
+	if err := decoder.Decode(&taskMaster); err != nil {
 		fmt.Println("Error al decodificar JSON:", err)
 		return
 	}
-	fmt.Println("Nodo Esclavo recibió tarea...")
-	fmt.Println("Calculando las peliculas similares....")
+	fmt.Printf("Nodo Esclavo recibió la tarea para: %s\n", taskMaster.Type)
 
-	// Create a new recommender instance
-	recommender := model.NewRecommender()
-
-	// Get similar movies
-	similarMovies := recommender.GetSimilarMovies(task.Movies, task.TargetMovie)
-	fmt.Println("Se encontro", len(similarMovies), "similar movies")
+	// Execute the task
+	response := dictFunction[taskMaster.Type](taskMaster)
 
 	// Send the result back to the master node
 	encoder := json.NewEncoder(conn)
-	if err := encoder.Encode(similarMovies); err != nil {
+	if err := encoder.Encode(response); err != nil {
 		fmt.Println("Error al codificar JSON:", err)
 		return
 	}
 	fmt.Println("Nodo Esclavo envió resultado")
+}
+
+// Services functions
+func getSimilarMovies(taskMaster types.TaskDistributed) []types.MovieResponse {
+
+	// get data from task
+	data := taskMaster.Data.TaskRecomendations
+
+	fmt.Printf("Nodo Esclavo recibió %d\n peliculas", len(data.Movies))
+	fmt.Println("Calculando las peliculas similares....")
+
+	// Get similar movies
+	similarMovies := recommender.GetSimilarMovies(data.Movies, data.TargetMovie)
+	fmt.Println("Se encontro", len(similarMovies), "similar movies")
+	return similarMovies
+}
+
+func getMoviesSearch(taskMaster types.TaskDistributed) []types.MovieResponse {
+	data := taskMaster.Data.TaskSearch
+	query := strings.ToLower(data.Query)
+	movies := data.Movies
+
+	fmt.Println("Buscando peliculas...")
+
+	type result struct {
+		movie      types.MovieResponse
+		similarity float64
+	}
+
+	numWorkers := 5
+	jobs := make(chan types.Movie, len(movies))
+	results := make(chan result, len(movies))
+
+	var wg sync.WaitGroup
+
+	fieldWeights := []struct {
+		field  func(types.Movie) string
+		weight float64
+	}{
+		{func(m types.Movie) string { return m.Title }, 4},
+		{func(m types.Movie) string { return m.Genres }, 3},
+		{func(m types.Movie) string { return m.Actors }, 2},
+		{func(m types.Movie) string { return m.Keywords }, 1},
+	}
+
+	for w := 0; w < numWorkers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for movie := range jobs {
+				totalSimilarity := 0.0
+				for _, fw := range fieldWeights {
+					if strings.Contains(strings.ToLower(fw.field(movie)), query) {
+						totalSimilarity += fw.weight
+					}
+				}
+				if totalSimilarity > 0 {
+					results <- result{
+						movie: types.MovieResponse{
+							ID:          movie.ID,
+							Title:       movie.Title,
+							Characters:  movie.Characters,
+							Actors:      movie.Actors,
+							Director:    movie.Director,
+							Genres:      movie.Genres,
+							ImdbId:      movie.ImdbId,
+							VoteAverage: movie.VoteAverage,
+							PosterPath:  movie.PosterPath,
+							Overview:    movie.Overview,
+							Similarity:  totalSimilarity,
+						},
+						similarity: totalSimilarity,
+					}
+				}
+			}
+		}()
+	}
+
+	for _, movie := range movies {
+		jobs <- movie
+	}
+	close(jobs)
+	wg.Wait()
+	close(results)
+
+	var resultsMovies []types.MovieResponse
+	for res := range results {
+		resultsMovies = append(resultsMovies, res.movie)
+	}
+
+	// Sort results by similarity descending
+	sort.Slice(resultsMovies, func(i, j int) bool {
+		return resultsMovies[i].Similarity > resultsMovies[j].Similarity
+	})
+
+	fmt.Println("Se encontraron", len(resultsMovies), "peliculas")
+	return resultsMovies
 }
