@@ -79,7 +79,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - VITE_API_URL=http://127.0.0.1:3000/api
-      - VITE_API_TMDB=
+      - VITE_API_TMDB=eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2MWI5NzEyMWIzZTY1MTI3N2JiMTkzOWEyZGI2M2VkMyIsIm5iZiI6MTczMDYwOTI2OS43OTA3MTcsInN1YiI6IjY0YTcwNzE5OTU3ZTZkMDEzOWNmMDc2ZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.AvK5oxP2qIFQ4BbNpOsIR-Sj1bAZoqDx_VZPTY1Lx0w
     ports:
       - "4321:4321"
     networks:

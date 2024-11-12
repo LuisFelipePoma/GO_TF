@@ -3,8 +3,8 @@ module api
 go 1.23.0
 
 require (
-	github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/services v0.0.0-20241109204853-edff1a99279f
-	github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types v0.0.0-20241109190821-0db8a4f1b4ac
+	github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/services v0.0.0-20241112214821-da5151c887cb
+	github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types v0.0.0-20241112214821-da5151c887cb
 )
 
 require (

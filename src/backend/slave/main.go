@@ -1,8 +1,11 @@
 package main
 
 import (
-	"encoding/json"
+	"bufio"
 	"fmt"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
+	jsoniter "github.com/json-iterator/go"
 	"log"
 	"math/rand"
 	"net"
@@ -11,11 +14,9 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
 
+var json = jsoniter.ConfigFastest
 var recommender = model.NewRecommender() // Create a new recommender instance
 
 // Entry point of the program
@@ -60,28 +61,30 @@ var dictFunction = map[types.TaskType]func(types.TaskDistributed) []types.MovieR
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	fmt.Println("Leyendo los datos entrantes....")
-	// Decodificate the JSON data
+	fmt.Println("Leyendo datos entrantes...")
+	// Decode the JSON data using buffered reader
 	var taskMaster types.TaskDistributed
 
-	decoder := json.NewDecoder(conn) // Create a JSON decoder that reads from
-	// Parse the JSON data
+	reader := bufio.NewReader(conn)
+	decoder := json.NewDecoder(reader)
+
 	if err := decoder.Decode(&taskMaster); err != nil {
-		fmt.Println("Error al decodificar JSON:", err)
+		fmt.Println("Error en codificar JSON:", err)
 		return
 	}
-	fmt.Printf("Nodo Esclavo recibió la tarea para: %s\n", taskMaster.Type)
+	fmt.Printf("Esclavo recibio la tarea de: %s\n", taskMaster.Type)
 
 	// Execute the task
 	response := dictFunction[taskMaster.Type](taskMaster)
 
-	// Send the result back to the master node
-	encoder := json.NewEncoder(conn)
+	// Send the result back using buffered writer
+	writer := bufio.NewWriter(conn)
+	encoder := json.NewEncoder(writer)
 	if err := encoder.Encode(response); err != nil {
-		fmt.Println("Error al codificar JSON:", err)
+		fmt.Println("Error en parsear JSON:", err)
 		return
 	}
-	fmt.Println("Nodo Esclavo envió resultado")
+	writer.Flush()
 }
 
 // Services functions
@@ -246,9 +249,9 @@ func getNMovies(taskMaster types.TaskDistributed) []types.MovieResponse {
 
 // getUserRecommendations returns the recommendations for a user
 func getUserRecommendations(taskMaster types.TaskDistributed) []types.MovieResponse {
-
 	data := taskMaster.Data
 	// Get recommendations
+	fmt.Println("Obteniendo recomendaciones para el usuario", data.TaskUserRecomendations.UserID)
 	recommendations := model.RecommendItemsC(data.TaskUserRecomendations.UserRatings, data.TaskUserRecomendations.UserID, data.Quantity)
 	// map ids of the movies
 	movies := []types.MovieResponse{}

@@ -23,6 +23,18 @@ var slaveNodes = []string{
 	os.Getenv("SLAVE3"),
 }
 
+// Task represents a task to be processed by a slave node
+type Task struct {
+	Slave    string
+	TaskData types.TaskDistributed
+}
+
+// Result represents the result from a slave node
+type Result struct {
+	Response types.Response
+	Error    error
+}
+
 var moviesService = services.NewMovies()
 var movies []types.Movie
 
@@ -304,14 +316,12 @@ func sendUserRecomendations(task types.TaskDistributed) types.Response {
 	response := types.Response{
 		Error:         "",
 		MovieResponse: combinedResults,
-		TargetMovie:   fmt.Sprintf("Usuario %d", userID),
+		TargetMovie:   fmt.Sprintf("%d", userID),
 	}
-
 	return response
 }
 
 // <------------ Function to handle the connection with the nodes
-
 func sendTasksToNodes(tasks []types.TaskDistributed) []types.MovieResponse {
 	// Create a goroutine for each slave node
 	var wg sync.WaitGroup
@@ -341,17 +351,6 @@ func sendTasksToNodes(tasks []types.TaskDistributed) []types.MovieResponse {
 		combinedResults = append(combinedResults, result...)
 	}
 	return combinedResults
-}
-
-
-var connectionPool = sync.Pool{
-    New: func() interface{} {
-        conn, err := net.Dial("tcp", "") // Dirección se asigna dinámicamente
-        if err != nil {
-            return nil
-        }
-        return conn
-    },
 }
 
 // Funtion to Get movies from the nodes
@@ -393,9 +392,6 @@ func senTaskToNode(node string, task types.TaskDistributed) ([]types.MovieRespon
 		log.Printf("Error al enviar la tarea al nodo %s: %v\n", node, err)
 		return reassignTask(task, node)
 	}
-
-	// Stablish a read deadline
-	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 
 	// Read the response from the node
 	response, err := io.ReadAll(conn)
