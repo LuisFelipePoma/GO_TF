@@ -3,70 +3,45 @@ import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import { getTmdbInfo } from '../services/movies'
 import { useNavigate } from 'react-router-dom'
-import { URL_IMG } from '../consts/api'
+import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { MovieResponse } from '../types/movies'
+import { TmdbResponse } from '../types/tmdb'
+import { averageStyles } from '../consts/styles'
 
 interface CardProps {
   movie: MovieResponse
-  children?: React.ReactNode
 }
 
-const PLACEHOLDER_URL = 'https://via.placeholder.com/200x300'
-
-const Card: React.FC<CardProps> = ({ movie, children }) => {
+const Card: React.FC<CardProps> = ({ movie }) => {
   const [posterPath, setPosterPath] = useState(
     movie.poster_path ?? PLACEHOLDER_URL
   )
+  const [movieInfo, setMovieInfo] = useState<TmdbResponse>()
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
-    const controller = new AbortController()
-    const { signal } = controller
-
-    const loadPoster = async () => {
-      if (!movie.poster_path || !movie.id) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        const response = await fetch(URL_IMG(movie.poster_path), { signal })
-        if ((await response.text()).includes('File Not Found')) {
-          throw new Error('Network response was not ok')
+    getTmdbInfo(movie.id!)
+      .then(res => {
+        setMovieInfo(res)
+        if (
+          res.poster_path === null ||
+          res.poster_path === '' ||
+          res.poster_path === undefined
+        ) {
+          throw new Error('No poster path found')
         }
-        setLoading(false)
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.log('returning')
-          return
-        }
-        console.error('Error fetching poster:', error)
-        try {
-          const res = await getTmdbInfo(movie.id)
-          if (res.poster_path === null) {
-            console.log('null')
-            throw new Error('No poster path found')
-          }
-          setPosterPath(res.poster_path ?? PLACEHOLDER_URL)
-          setLoading(false)
-        } catch (error) {
-          console.error('Error fetching TMDB info:', error)
-          setPosterPath(PLACEHOLDER_URL)
-          setLoading(false)
-        }
-      }
-    }
-    loadPoster()
-
-    return () => {
-      console.log('Aborting fetch')
-      controller.abort()
-    }
+        setPosterPath(res.poster_path!)
+      })
+      .catch(() => {
+        setPosterPath(PLACEHOLDER_URL)
+      })
+      .finally(() => setLoading(false))
   }, [movie.id, movie.poster_path])
 
   const handleMovieClick = (movie: MovieResponse) => {
-    navigate(`/movie/${movie.id}`, { state: { movie, posterPath } })
+    if (!movieInfo) return
+    navigate(`/movie/${movie.id}`, { state: { movie, movieInfo } })
     // also take to the top of the page
     window.scrollTo(0, 0)
   }
@@ -102,7 +77,35 @@ const Card: React.FC<CardProps> = ({ movie, children }) => {
           />
         </div>
       )}
-      {children}
+      <section className='grid py-2 px-2 gap-2 h-[100px] w-full'>
+        <article className='flex w-full justify-between min-h-[25px]'>
+          <h5 className='h-full text-body-16 group-hover:underline line-clamp-2'>
+            {movie.title} (
+            {movieInfo?.release_date
+              ? new Date(movieInfo.release_date).getFullYear()
+              : '20XX'}
+            )
+          </h5>
+          <p
+            className={`hover:brightness-110 transition-all duration-1000 ease-in-out 
+                  text-body-14 rounded-full w-fit h-fit font-bold text-black px-2 py-1 ${averageStyles(
+                    movie.vote_average!
+                  )}`}
+          >
+            {movie.vote_average?.toPrecision(2)}
+          </p>
+        </article>
+        <div className='flex flex-wrap gap-1 items-start'>
+          {movie.genres?.split(',').map(genre => (
+            <span
+              className='w-fit h-fit text-body-12 upper px-[0.3rem] py-[0.1rem] bg-secondary rounded-md hover:bg-tertiary transition-colors duration-500 ease-in-out'
+              key={genre}
+            >
+              {genre}
+            </span>
+          ))}
+        </div>
+      </section>
     </a>
   )
 }

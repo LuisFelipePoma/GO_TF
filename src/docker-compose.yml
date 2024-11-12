@@ -75,7 +75,7 @@ services:
       context: ./app
       dockerfile: Dockerfile
     environment:
-      - API_URL=http://localhost:4321
+      - VITE_API_URL=http://localhost:4321
     ports:
       - "4321:4321"
     networks:

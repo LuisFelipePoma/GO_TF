@@ -4,24 +4,23 @@ import type { MovieResponse } from '../types/movies'
 import { getRecommendations } from '../services/movies'
 import { ListMovies } from '../components/ListMovies'
 import Skeleton from 'react-loading-skeleton'
-import { URL_IMG } from '../consts/api'
+import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { averageStyles } from '../consts/styles'
+import { TmdbResponse } from '../types/tmdb'
 
 const MovieInfo: React.FC = () => {
   const location = useLocation()
   const { movie } = location.state as { movie: MovieResponse }
-  const { posterPath } = location.state as { posterPath: string }
+  const { movieInfo } = location.state as { movieInfo: TmdbResponse }
   const [recomendations, setRecomendations] = React.useState<MovieResponse[]>(
     []
   )
   const [loading, setLoading] = React.useState<boolean>(true)
 
-  console.log(posterPath)
-
   useEffect(() => {
     let isMounted = true
-    setLoading(true)
 
+    setLoading(true)
     getRecommendations(movie.title!, 20).then(res => {
       if (isMounted) {
         setRecomendations(res.movie_response!)
@@ -39,8 +38,12 @@ const MovieInfo: React.FC = () => {
       <section className='flex gap-x-10 overflow-y-hidden'>
         <div className='relative'>
           <img
-            src={URL_IMG(posterPath, 300)}
-            alt={movie.poster_path}
+            src={
+              movieInfo.poster_path ?? movieInfo.poster_path
+                ? URL_IMG(movieInfo.poster_path, 300)
+                : PLACEHOLDER_URL
+            }
+            alt={movie.title}
             className='min-w-[300px] max-w-[300px] h-auto rounded-md filter drop-shadow-md brightness-90 hover:brightness-100
              transition-all duration-1000 ease-in-out'
           />
@@ -55,7 +58,11 @@ const MovieInfo: React.FC = () => {
 
         <article className='flex flex-col gap-3 justify-start gap-y-10'>
           <h3 className='underline leading-none font-semibold'>
-            {movie.title}
+            {movie.title} (
+            {movieInfo?.release_date
+              ? new Date(movieInfo.release_date).getFullYear()
+              : '20XX'}
+            )
           </h3>
           <p className='text-body-20'>{movie.overview}</p>
           <div className='flex gap-x-4 select-none'>
@@ -69,6 +76,15 @@ const MovieInfo: React.FC = () => {
             ))}
           </div>
           <div className='flex flex-col gap-2 text-balance'>
+            <p>
+              <span className='font-bold text-primary'>Release Date: </span>
+              {/* Format to 19 November, 2015 */}
+              {new Date(movieInfo.release_date!).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </p>
             <p>
               <span className='font-bold text-primary'>Director: </span>
               {movie.director}
