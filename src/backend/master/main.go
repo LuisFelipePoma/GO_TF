@@ -3,6 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/errors"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/services"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/utils"
 	"io"
 	"log"
 	"net"
@@ -10,11 +14,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	Error "github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/errors"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/services"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/utils"
 )
 
 var slaveNodes = []string{
