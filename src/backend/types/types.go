@@ -45,7 +45,7 @@ const (
 	TaskNone     TaskType = ""
 	TaskRecomend TaskType = "Recommend"
 	TaskSearch   TaskType = "SearchQuery"
-	TaskGet      TaskType = "GetNMovies"
+	TaskGet      TaskType = "GetMovies"
 	TaskFind     TaskType = "FindXMovie"
 )
 
@@ -58,15 +58,14 @@ type TaskData struct {
 	TaskRecomendations *TaskRecomendations `json:"recomendations,omitempty"`
 	TaskSearch         *TaskMasterSearch   `json:"search,omitempty"`
 	Quantity           int                 `json:"quantity"`
+	Movies             []Movie             `json:"movies"`
 }
 
 type TaskRecomendations struct {
-	Title                 string              `json:"title"`
-	TargetMovie Movie   `json:"movie"`
-	Movies      []Movie `json:"movies"`
+	Title       string `json:"title"`
+	TargetMovie Movie  `json:"movie"`
 }
 
 type TaskMasterSearch struct {
-	Query  string  `json:"query"`
-	Movies []Movie `json:"movies"`
+	Query string `json:"query"`
 }

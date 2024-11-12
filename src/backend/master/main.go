@@ -24,6 +24,7 @@ var slaveNodes = []string{
 }
 
 var moviesService = services.NewMovies()
+var movies []types.Movie
 
 // Distribute the task to the slave nodes
 var numSlaves = len(slaveNodes)
@@ -51,7 +52,8 @@ func main() {
 		return
 	}
 	// Split the movies into ranges
-	ranges = utils.SplitRanges(len(moviesService.Movies), numSlaves)
+	movies = moviesService.Movies
+	ranges = utils.SplitRanges(len(movies), numSlaves)
 
 	// Create a listener
 	listener, err := net.Listen("tcp", ":"+port)
@@ -77,6 +79,7 @@ func main() {
 var dictFunction = map[types.TaskType]func(types.TaskDistributed) types.Response{
 	types.TaskRecomend: similarMoviesHandler,
 	types.TaskSearch:   searchMoviesHandler,
+	types.TaskGet:      getNMoviesHandler,
 }
 
 // Handle the incoming requests
@@ -112,7 +115,6 @@ func similarMoviesHandler(task types.TaskDistributed) types.Response {
 
 	// Get the data from the task
 	n_recomendations := task.Data.Quantity
-	movies := moviesService.Movies
 	movieTarget := *moviesService.GetMovieByTitle(data.Title)
 
 	// update the task to the new ranges for each node
@@ -121,10 +123,10 @@ func similarMoviesHandler(task types.TaskDistributed) types.Response {
 		newTask := types.TaskDistributed{
 			Type: types.TaskRecomend,
 			Data: types.TaskData{
+				Movies: movies[r[0]:r[1]],
 				TaskRecomendations: &types.TaskRecomendations{
 					Title:       movieTarget.Title,
 					TargetMovie: movieTarget,
-					Movies:      movies[r[0]:r[1]],
 				},
 			},
 		}
@@ -158,7 +160,6 @@ func similarMoviesHandler(task types.TaskDistributed) types.Response {
 func searchMoviesHandler(task types.TaskDistributed) types.Response {
 	data := task.Data.TaskSearch
 	query := data.Query
-	movies := moviesService.Movies
 
 	fmt.Println("Buscando peliculas...")
 	// update the task to the new ranges for each node
@@ -167,9 +168,9 @@ func searchMoviesHandler(task types.TaskDistributed) types.Response {
 		newTask := types.TaskDistributed{
 			Type: types.TaskSearch,
 			Data: types.TaskData{
+				Movies: movies[r[0]:r[1]],
 				TaskSearch: &types.TaskMasterSearch{
-					Query:  query,
-					Movies: movies[r[0]:r[1]],
+					Query: query,
 				},
 			},
 		}
@@ -192,6 +193,49 @@ func searchMoviesHandler(task types.TaskDistributed) types.Response {
 		Error:         "",
 		MovieResponse: results,
 		TargetMovie:   query,
+	}
+
+	return response
+}
+
+func getNMoviesHandler(task types.TaskDistributed) types.Response {
+	// Get the data from the task
+	n := task.Data.Quantity
+
+	// Update the task to the new ranges for each node
+	var tasks []types.TaskDistributed
+	for _, r := range ranges {
+		newTask := types.TaskDistributed{
+			Type: types.TaskGet,
+			Data: types.TaskData{
+				Movies:   movies[r[0]:r[1]],
+				Quantity: n,
+			},
+		}
+		tasks = append(tasks, newTask)
+	}
+
+	// Send the task to the nodes
+	results := sendTasksToNodes(tasks)
+
+	// Combine the results from all the slaves
+	var combinedResults []types.MovieResponse
+	combinedResults = append(combinedResults, results...)
+
+	// Sort the combined results by voteAverage
+	// sort.Slice(combinedResults, func(i, j int) bool {
+	// 	return combinedResults[i].VoteAverage > combinedResults[j].VoteAverage
+	// })
+
+	// Limit the number of results to n
+	if len(combinedResults) > n {
+		combinedResults = combinedResults[:n]
+	}
+
+	// Create the response
+	response := types.Response{
+		Error:         "",
+		MovieResponse: combinedResults,
 	}
 
 	return response

@@ -1,9 +1,9 @@
 import { API_TMDB, URL_API, URL_TMDB } from '../consts/api'
-import { type Movie, type Movies } from '../types/movies'
+import { type Response } from '../types/movies'
 import type { TmdbResponse } from '../types/tmdb'
 
 // Service to get all movies
-export const getAllMovies = async (n: number): Promise<Movie[]> => {
+export const getAllMovies = async (n: number): Promise<Response> => {
   try {
     const response = await fetch(`${URL_API}/movies?n=${n}`)
     if (!response.ok) {
@@ -16,24 +16,38 @@ export const getAllMovies = async (n: number): Promise<Movie[]> => {
   }
 }
 
-// Service to get by id Movie
-export const getMovieById = async (id: number): Promise<Movie> => {
+// Service to get by Query
+export const getMoviesByQuery = async (
+  query: string,
+  n: number
+): Promise<Response> => {
   try {
-    const response = await fetch(`${URL_API}/movies?id=${id}`)
+    const response = await fetch(
+      `${URL_API}/movies/search?query=${query}&n=${n}`
+    )
     if (!response.ok) {
-      throw new Error(`Error fetching movie by id: ${response.statusText}`)
+      throw new Error(`Error fetching movies by query: ${response.statusText}`)
     }
     return await response.json()
   } catch (error) {
-    console.error('Error fetching movie by id:', error)
+    console.error('Error fetching movies by query:', error)
     throw error
   }
 }
 
 // Service to get the recommendations by title
-export const getRecommendations = async (title: string): Promise<Movies> => {
+export const getRecommendations = async (
+  title: string,
+  n: number
+): Promise<Response> => {
   try {
-    const response = await fetch(`${URL_API}/movies/similar?title=${title}`)
+    const response = await fetch(`${URL_API}/movies/similar`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title, n })
+    })
     if (!response.ok) {
       throw new Error(`Error fetching recommendations: ${response.statusText}`)
     }

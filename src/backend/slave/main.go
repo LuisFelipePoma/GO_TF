@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/slave/model"
 	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
@@ -50,6 +52,7 @@ func main() {
 var dictFunction = map[types.TaskType]func(types.TaskDistributed) []types.MovieResponse{
 	types.TaskRecomend: getSimilarMovies,
 	types.TaskSearch:   getMoviesSearch,
+	types.TaskGet:      getNMovies,
 }
 
 // handleConnection handles incoming connections
@@ -84,21 +87,22 @@ func handleConnection(conn net.Conn) {
 func getSimilarMovies(taskMaster types.TaskDistributed) []types.MovieResponse {
 
 	// get data from task
-	data := taskMaster.Data.TaskRecomendations
+	data := taskMaster.Data
 
 	fmt.Printf("Nodo Esclavo recibió %d\n peliculas", len(data.Movies))
 	fmt.Println("Calculando las peliculas similares....")
 
 	// Get similar movies
-	similarMovies := recommender.GetSimilarMovies(data.Movies, data.TargetMovie)
+	similarMovies := recommender.GetSimilarMovies(data.Movies, data.TaskRecomendations.TargetMovie)
 	fmt.Println("Se encontro", len(similarMovies), "similar movies")
 	return similarMovies
 }
 
+// GetMoviesSearch search movies by query
 func getMoviesSearch(taskMaster types.TaskDistributed) []types.MovieResponse {
-	data := taskMaster.Data.TaskSearch
-	query := strings.ToLower(data.Query)
-	movies := data.Movies
+	data := taskMaster.Data
+	query := strings.ToLower(data.TaskSearch.Query)
+	movies := taskMaster.Data.Movies
 
 	fmt.Println("Buscando peliculas...")
 
@@ -175,4 +179,66 @@ func getMoviesSearch(taskMaster types.TaskDistributed) []types.MovieResponse {
 
 	fmt.Println("Se encontraron", len(resultsMovies), "peliculas")
 	return resultsMovies
+}
+
+// getNMovies returns the random N movies
+func getNMovies(taskMaster types.TaskDistributed) []types.MovieResponse {
+	data := taskMaster.Data
+	n := data.Quantity
+	movies := data.Movies
+
+	fmt.Println("Obteniendo", n, "peliculas aleatorias")
+
+	if n > len(movies) {
+		n = len(movies)
+	}
+
+	selected := make([]types.MovieResponse, 0, n)
+	selectedMap := make(map[int]bool)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	jobs := make(chan int, n*2)
+
+	// Start worker goroutines
+	for w := 0; w < 5; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				mu.Lock()
+				if !selectedMap[index] {
+					selectedMap[index] = true
+					selected = append(selected, types.MovieResponse{
+						ID:          movies[index].ID,
+						Title:       movies[index].Title,
+						Characters:  movies[index].Characters,
+						Actors:      movies[index].Actors,
+						Director:    movies[index].Director,
+						Genres:      movies[index].Genres,
+						ImdbId:      movies[index].ImdbId,
+						VoteAverage: movies[index].VoteAverage,
+						PosterPath:  movies[index].PosterPath,
+						Overview:    movies[index].Overview,
+					})
+					if len(selected) >= n {
+						mu.Unlock()
+						return
+					}
+				}
+				mu.Unlock()
+			}
+		}()
+	}
+
+	// Generate random indices
+	rand.Seed(time.Now().UnixNano())
+	for len(selected) < n {
+		index := rand.Intn(len(movies))
+		jobs <- index
+	}
+
+	close(jobs)
+	wg.Wait()
+
+	return selected
 }

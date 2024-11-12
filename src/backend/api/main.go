@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
 )
 
 var nodeMasterPort = os.Getenv("MASTER_NODE") // Port of the master node
@@ -28,7 +30,6 @@ func main() {
 // Configurar los manejadores HTTP
 func setupRoutes() {
 	http.HandleFunc("/api/movies/similar", corsMiddleware(getSimilarMovies)) // GET
-	http.HandleFunc("/api/movies/id", corsMiddleware(getById))               // GET
 	http.HandleFunc("/api/movies/search", corsMiddleware(getMoviesBySearch)) // GET
 	http.HandleFunc("/api/movies", corsMiddleware(getAllMovies))             // GET
 }
@@ -50,32 +51,40 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // HANDLERS
 func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET /api/movies/similar")
-	// Get title from args
-	title := r.URL.Query().Get("title")
-	quantity := r.URL.Query().Get("n")
-
-	// handle errors
-	if title == "" {
-		http.Error(w, "Title is required", http.StatusBadRequest)
-		return
-	}
-
-	if quantity == "" {
-		http.Error(w, "Quantity is required", http.StatusBadRequest)
-		return
-	}
-	// Convert quantity to int
-	quantityInt, err := strconv.Atoi(quantity)
+	// Leer el cuerpo de la petición
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Invalid quantity format", http.StatusBadRequest)
+		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(body, &data); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Obtener y validar 'title'
+	title, ok := data["title"].(string)
+	if !ok || title == "" {
+		http.Error(w, "Title is required and must be a string", http.StatusBadRequest)
+		return
+	}
+
+	// Obtener y validar 'n'
+	nFloat, ok := data["n"].(float64)
+	if !ok {
+		http.Error(w, "Quantity 'n' is required and must be a number", http.StatusBadRequest)
+		return
+	}
+	quantity := int(nFloat)
 
 	// Create a request
 	request := types.TaskDistributed{
 		Type: types.TaskRecomend,
 		Data: types.TaskData{
-			Quantity: quantityInt,
+			Quantity: quantity,
 			TaskRecomendations: &types.TaskRecomendations{
 				Title: title,
 			},
@@ -92,48 +101,62 @@ func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAllMovies(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println("GET /api/movies")
-	// nStr := r.URL.Query().Get("n")
-	// if nStr == "" {
-	// 	nStr = "10"
-	// }
-	// // Convert n to int
-	// n, err := strconv.Atoi(nStr)
+	fmt.Println("GET /api/movies")
+	nStr := r.URL.Query().Get("n")
+	if nStr == "" {
+		nStr = "10"
+	}
+	// Convert n to int
+	n, err := strconv.Atoi(nStr)
 
-	// if err != nil {
-	// 	http.Error(w, "Invalid number format", http.StatusBadRequest)
-	// 	return
-	// }
-	// response := err
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(response)
-}
+	if err != nil {
+		http.Error(w, "Invalid number format", http.StatusBadRequest)
+		return
+	}
 
-func getById(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println("GET /api/movies")
-	// idStr := r.URL.Query().Get("id")
-	// if idStr == "" {
-	// 	idStr = "1"
-	// }
-	// // Convert n to int
-	// id, err := strconv.Atoi(idStr)
+	// Create Request
+	request := types.TaskDistributed{
+		Type: types.TaskGet,
+		Data: types.TaskData{
+			Quantity: n,
+		},
+	}
+	// Handle the connection to the master node
+	response, errorMessage := handleMasterConection(request)
+	if errorMessage != "" {
+		fmt.Println(errorMessage)
+	}
 
-	// if err != nil {
-	// 	http.Error(w, "Invalid number format", http.StatusBadRequest)
-	// 	return
-	// }
-	// response := err
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(response)
+	// Send the response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func getMoviesBySearch(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET /api/movies/search")
 	query := r.URL.Query().Get("query")
+	n := r.URL.Query().Get("n")
+
+	// Handle errors
+	if query == "" {
+		http.Error(w, "Query is required", http.StatusBadRequest)
+		return
+	}
+	if n == "" {
+		n = "10"
+	}
+
+	// Convert n to int
+	nInt, err := strconv.Atoi(n)
+	if err != nil {
+		http.Error(w, "Invalid number format", http.StatusBadRequest)
+		return
+	}
 	// Create a request
 	request := types.TaskDistributed{
 		Type: types.TaskSearch,
 		Data: types.TaskData{
+			Quantity: nInt,
 			TaskSearch: &types.TaskMasterSearch{
 				Query: query,
 			},

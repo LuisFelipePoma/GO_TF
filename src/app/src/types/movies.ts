@@ -1,21 +1,7 @@
-export interface Movie {
-  id?: number
-  keywords?: string
-  characters?: string
-  actors?: string
-  director?: string
-  crew?: string
-  genres?: string
-  overview?: string
-  title?: string
-  imdb_id?: string
-  vote_average?: number
-	poster_path?: string
-}
-
-export interface Movies {
+export interface Response {
   error?: string
   movie_response?: MovieResponse[]
+  target_movie?: string
 }
 
 export interface MovieResponse {
@@ -27,4 +13,7 @@ export interface MovieResponse {
   genres?: string
   imdb_id?: string
   vote_average?: number
+  poster_path?: string
+  overview?: string
+  similarity?: number
 }

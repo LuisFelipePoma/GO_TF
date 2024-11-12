@@ -5,7 +5,7 @@ import Header from './Header'
 
 const Layout: React.FC = () => {
   return (
-    <div className='grid place-content-center place-items-center'>
+    <div className='grid place-items-center w-[100vw] h-[100vh] px-[10vw]'>
       <Header />
       <Outlet />
     </div>

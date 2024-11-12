@@ -1,14 +1,15 @@
-@import url("https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Nova+Square&family=Oswald:wght@200..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 
 :root {
-	--color-primary: #c8b6e2;
-	--color-secondary: #a8a4ce;
-	--color-tertiary: #7a86b6;
-	--color-dark: #495c83;
+	--color-primary: #ba0c0c;
+	--color-secondary: #980a0a;
+	--color-tertiary: #564d4d;
+	--color-dark: #0B0000;
 	--color-gray: #acb2b7;
 	--color-light: #ffffff;
 
@@ -34,7 +35,7 @@
 }
 
 html {
-	font-family: "Genos", sans-serif;
+	font-family: "Roboto", sans-serif;
 	font-optical-sizing: auto;
 	font-weight: normal;
 	font-style: normal;
@@ -45,6 +46,15 @@ html {
 	/* no scrollbar visible */
 	scrollbar-width: none;
 	-ms-overflow-style: none;
+}
+
+h5,
+h4,
+h3,
+h2,
+span,
+h1 {
+	font-family: "Oswald", serif;
 }
 
 h5 {
