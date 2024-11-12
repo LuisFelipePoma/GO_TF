@@ -1,30 +1,51 @@
+// go
 package main
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
+	"github.com/gorilla/websocket"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
-
-	"github.com/LuisFelipePoma/Movies_Recomender_With_Golang/src/backend/types"
+	"time"
 )
 
-var nodeMasterPort = os.Getenv("MASTER_NODE") // Port of the master node
+var nodeMasterPort = os.Getenv("MASTER_NODE") // Puerto del nodo maestro
+
+var upgrader = websocket.Upgrader{} // Utilizado para actualizar la conexión HTTP a WebSocket
+var clients = make(map[*websocket.Conn]bool)
+var broadcast = make(chan []types.MovieResponse)
+
+// Client represents a connected client
+type Client struct {
+	conn *websocket.Conn
+	send chan []byte
+}
+
+// Message represents the recommendation message structure
+type Message struct {
+	User            string   `json:"user"`
+	Recommendations []string `json:"recommendations"`
+}
 
 func main() {
-	// Read
+	// Leer el puerto desde la variable de entorno
 	port := os.Getenv("PORT")
-
+	if port == "" {
+		port = "8000" // Puerto por defecto si no está configurado
+	}
 	// Configurar los manejadores HTTP
 	setupRoutes()
 
-	fmt.Println("Server is running on port ", port)
-	http.ListenAndServe(":"+port, nil)
+	// Iniciar una rutina para enviar recomendaciones periódicamente
+	go sendPeriodicRecommendations()
 
+	fmt.Println("Server is running on port", port)
+	http.ListenAndServe(":"+port, nil)
 }
 
 // Configurar los manejadores HTTP
@@ -32,6 +53,7 @@ func setupRoutes() {
 	http.HandleFunc("/api/movies/similar", corsMiddleware(getSimilarMovies)) // GET
 	http.HandleFunc("/api/movies/search", corsMiddleware(getMoviesBySearch)) // GET
 	http.HandleFunc("/api/movies", corsMiddleware(getAllMovies))             // GET
+	http.HandleFunc("/ws", handleWebSocketConnections)                       // WebSocket endpoint
 }
 
 // Middleware para manejar CORS
@@ -49,10 +71,68 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // HANDLERS
+// Handler to send recommendations
+func handleWebSocketConnections(w http.ResponseWriter, r *http.Request) {
+	// Update the upgrader to allow all connections
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // Permitir todas las conexiones
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println("Error al actualizar a WebSocket:", err)
+		return
+	}
+	defer ws.Close()
+
+	// Register our new client
+	clients[ws] = true
+	fmt.Println("Nuevo cliente conectado.")
+
+	// Listen for new messages
+	for {
+		_, _, err := ws.ReadMessage()
+		if err != nil {
+			fmt.Println("Cliente desconectado:", err)
+			delete(clients, ws)
+			break
+		}
+	}
+}
+
+// Function for sending periodic recommendations
+func sendPeriodicRecommendations() {
+	// Create Task for the master node
+	request := types.TaskDistributed{
+		Type: types.TaskUserRecomend,
+	}
+	for {
+		time.Sleep(25 * time.Second) // Wait 10 seconds
+
+		if len(clients) == 0 {
+			continue
+		}
+		// Get response from the master node
+		response, errorMessage := handleMasterConection(request)
+		if errorMessage != "" {
+			fmt.Println(errorMessage)
+			continue
+		}
+		fmt.Println("Enviando recomendaciones a los clientes.")
+		// Send the recommendations
+		for client := range clients {
+			err := client.WriteJSON(response)
+			if err != nil {
+				fmt.Println("Error al enviar recomendaciones:", err)
+				client.Close()
+				delete(clients, client)
+			}
+		}
+	}
+}
+
+// Handle the similar movies request
 func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET /api/movies/similar")
 	// Leer el cuerpo de la petición
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 		return
@@ -90,6 +170,7 @@ func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 	}
+
 	// Handle the connection to the master node
 	response, errorMessage := handleMasterConection(request)
 	if errorMessage != "" {
@@ -157,7 +238,7 @@ func getMoviesBySearch(w http.ResponseWriter, r *http.Request) {
 		Type: types.TaskSearch,
 		Data: types.TaskData{
 			Quantity: nInt,
-			TaskSearch: &types.TaskMasterSearch{
+			TaskSearch: &types.TaskSearchQuery{
 				Query: query,
 			},
 		},

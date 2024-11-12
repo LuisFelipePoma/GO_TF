@@ -50,9 +50,10 @@ func main() {
 }
 
 var dictFunction = map[types.TaskType]func(types.TaskDistributed) []types.MovieResponse{
-	types.TaskRecomend: getSimilarMovies,
-	types.TaskSearch:   getMoviesSearch,
-	types.TaskGet:      getNMovies,
+	types.TaskRecomend:     getSimilarMovies,
+	types.TaskSearch:       getMoviesSearch,
+	types.TaskGet:          getNMovies,
+	types.TaskUserRecomend: getUserRecommendations,
 }
 
 // handleConnection handles incoming connections
@@ -241,4 +242,23 @@ func getNMovies(taskMaster types.TaskDistributed) []types.MovieResponse {
 	wg.Wait()
 
 	return selected
+}
+
+// getUserRecommendations returns the recommendations for a user
+func getUserRecommendations(taskMaster types.TaskDistributed) []types.MovieResponse {
+
+	data := taskMaster.Data
+	// Get recommendations
+	recommendations := model.RecommendItemsC(data.TaskUserRecomendations.UserRatings, data.TaskUserRecomendations.UserID, data.Quantity)
+	// map ids of the movies
+	movies := []types.MovieResponse{}
+	for _, id := range recommendations {
+		movieResponse := types.MovieResponse{
+			ID: id,
+		}
+		movies = append(movies, movieResponse)
+	}
+
+	fmt.Println("Se encontraron", len(recommendations), "recomendaciones")
+	return movies
 }

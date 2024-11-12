@@ -58,6 +58,7 @@ export const getRecommendations = async (
   }
 }
 
+
 // Service to get the image
 export const getTmdbInfo = async (id: number): Promise<TmdbResponse> => {
   try {

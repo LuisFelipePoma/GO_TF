@@ -28,10 +28,10 @@ var movies []types.Movie
 
 // Distribute the task to the slave nodes
 var numSlaves = len(slaveNodes)
-var ranges [][2]int
+var rangesMovies [][2]int
 
-const TIMEOUT = 5 * time.Second
-const MAX_RETRIES = 3
+const TIMEOUT = 10 * time.Second
+const MAX_RETRIES = 2
 
 // 500ms
 const RETRY_DELAY = 150 * time.Millisecond
@@ -48,12 +48,20 @@ func main() {
 	// Cargar Peliculas
 	err := moviesService.LoadMovies("movies.json")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("No se pudo cargar la informacion de las peliculas.", err)
 		return
 	}
+
+	// Cargar Ratings
+	err = moviesService.LoadRatings("ratings.csv")
+	if err != nil {
+		fmt.Println("No se pudo cargar los ratings.", err)
+		return
+	}
+
 	// Split the movies into ranges
 	movies = moviesService.Movies
-	ranges = utils.SplitRanges(len(movies), numSlaves)
+	rangesMovies = utils.SplitRanges(len(movies), numSlaves)
 
 	// Create a listener
 	listener, err := net.Listen("tcp", ":"+port)
@@ -77,9 +85,10 @@ func main() {
 }
 
 var dictFunction = map[types.TaskType]func(types.TaskDistributed) types.Response{
-	types.TaskRecomend: similarMoviesHandler,
-	types.TaskSearch:   searchMoviesHandler,
-	types.TaskGet:      getNMoviesHandler,
+	types.TaskRecomend:     similarMoviesHandler,
+	types.TaskSearch:       searchMoviesHandler,
+	types.TaskGet:          getNMoviesHandler,
+	types.TaskUserRecomend: sendUserRecomendations,
 }
 
 // Handle the incoming requests
@@ -119,7 +128,7 @@ func similarMoviesHandler(task types.TaskDistributed) types.Response {
 
 	// update the task to the new ranges for each node
 	var tasks []types.TaskDistributed
-	for _, r := range ranges {
+	for _, r := range rangesMovies {
 		newTask := types.TaskDistributed{
 			Type: types.TaskRecomend,
 			Data: types.TaskData{
@@ -164,12 +173,12 @@ func searchMoviesHandler(task types.TaskDistributed) types.Response {
 	fmt.Println("Buscando peliculas...")
 	// update the task to the new ranges for each node
 	var tasks []types.TaskDistributed
-	for _, r := range ranges {
+	for _, r := range rangesMovies {
 		newTask := types.TaskDistributed{
 			Type: types.TaskSearch,
 			Data: types.TaskData{
 				Movies: movies[r[0]:r[1]],
-				TaskSearch: &types.TaskMasterSearch{
+				TaskSearch: &types.TaskSearchQuery{
 					Query: query,
 				},
 			},
@@ -198,13 +207,14 @@ func searchMoviesHandler(task types.TaskDistributed) types.Response {
 	return response
 }
 
+// GetNMoviesHandler returns a list of n movies
 func getNMoviesHandler(task types.TaskDistributed) types.Response {
 	// Get the data from the task
 	n := task.Data.Quantity
 
 	// Update the task to the new ranges for each node
 	var tasks []types.TaskDistributed
-	for _, r := range ranges {
+	for _, r := range rangesMovies {
 		newTask := types.TaskDistributed{
 			Type: types.TaskGet,
 			Data: types.TaskData{
@@ -222,11 +232,6 @@ func getNMoviesHandler(task types.TaskDistributed) types.Response {
 	var combinedResults []types.MovieResponse
 	combinedResults = append(combinedResults, results...)
 
-	// Sort the combined results by voteAverage
-	// sort.Slice(combinedResults, func(i, j int) bool {
-	// 	return combinedResults[i].VoteAverage > combinedResults[j].VoteAverage
-	// })
-
 	// Limit the number of results to n
 	if len(combinedResults) > n {
 		combinedResults = combinedResults[:n]
@@ -236,6 +241,70 @@ func getNMoviesHandler(task types.TaskDistributed) types.Response {
 	response := types.Response{
 		Error:         "",
 		MovieResponse: combinedResults,
+	}
+
+	return response
+}
+
+// DivideUsers splits the users into specified number of groups, excluding the given userId
+func SplitUsers(usersRatings map[int]types.User, excludeUserId int, numGroups int) []map[int]types.User {
+	groups := make([]map[int]types.User, numGroups)
+	for i := range groups {
+		groups[i] = make(map[int]types.User)
+	}
+	currentGroup := 0
+	for id, user := range usersRatings {
+		if user.ID != excludeUserId {
+			groups[currentGroup][id] = user
+			currentGroup = (currentGroup + 1) % numGroups
+		}
+	}
+	return groups
+}
+
+// sendUserRecomendations returns a list of movies recommended for a user
+func sendUserRecomendations(task types.TaskDistributed) types.Response {
+	// Get the data from the task
+	userID := moviesService.GetRandomUserID()
+	fmt.Printf("Recomendaciones para el usuario %d\n", userID)
+
+	// Divide users into groups excluding the current user
+	userGroups := SplitUsers(moviesService.UserRatings, userID, numSlaves)
+
+	// Update the task
+	var tasks []types.TaskDistributed
+	for _, group := range userGroups {
+		newTask := types.TaskDistributed{
+			Type: types.TaskUserRecomend,
+			Data: types.TaskData{
+				Quantity: 5,
+				TaskUserRecomendations: &types.TaskUserRecomendations{
+					UserID:      userID,
+					User:        moviesService.UserRatings[userID].Ratings,
+					UserRatings: group, // Ensure this method processes the group
+				},
+			},
+		}
+		tasks = append(tasks, newTask)
+	}
+
+	// Send the task to the nodes
+	results := sendTasksToNodes(tasks)
+
+	// Combine the results from all the slaves
+	var combinedResults []types.MovieResponse
+	combinedResults = append(combinedResults, results...)
+
+	// Sort the combined results by similarity
+	sort.Slice(combinedResults, func(i, j int) bool {
+		return combinedResults[i].Similarity > combinedResults[j].Similarity
+	})
+
+	// Create the response
+	response := types.Response{
+		Error:         "",
+		MovieResponse: combinedResults,
+		TargetMovie:   fmt.Sprintf("Usuario %d", userID),
 	}
 
 	return response
@@ -272,6 +341,17 @@ func sendTasksToNodes(tasks []types.TaskDistributed) []types.MovieResponse {
 		combinedResults = append(combinedResults, result...)
 	}
 	return combinedResults
+}
+
+
+var connectionPool = sync.Pool{
+    New: func() interface{} {
+        conn, err := net.Dial("tcp", "") // Dirección se asigna dinámicamente
+        if err != nil {
+            return nil
+        }
+        return conn
+    },
 }
 
 // Funtion to Get movies from the nodes

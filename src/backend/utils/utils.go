@@ -13,3 +13,4 @@ func SplitRanges(totalMovies, numParts int) [][2]int {
 	}
 	return ranges
 }
+

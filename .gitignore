@@ -30,3 +30,4 @@ src/backend/database/data/*.csv
 .env.local
 
 src/app/node_modules
+*.csv
