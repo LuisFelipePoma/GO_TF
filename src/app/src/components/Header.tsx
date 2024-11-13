@@ -10,8 +10,8 @@ const Header: React.FC = () => {
         to='/'
         className=' p-0 m-0 flex items-center h-[15px] justify-center group'
       >
-        <Icon className='w-[50px] text-secondary stroke-1 h-[50px]' />
-        <span className='text-[54px] group-hover:text-primary  transition-all duration-700 ease-in-out'>
+        <Icon className='w-[50px] text-secondary stroke-1' />
+        <span className='text-[54px] group-hover:text-primary group-hover:underline transition-all duration-700 ease-in-out'>
           Movies Recomender
         </span>
       </Link>

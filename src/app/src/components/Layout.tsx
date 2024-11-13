@@ -63,17 +63,17 @@ const Layout: React.FC = () => {
     <div className='grid place-items-center w-[100vw] h-[100vh] px-[10vw] relative'>
       {/* Background image with gradient overlay */}
       {backgroundPath && (
-        <div className='absolute inset-0 -z-10'>
+        <div className='absolute inset-0 -z-10 overflow-hidden'>
           <img
-            className='w-full h-full object-cover opacity-40 filter blur-[0.5px]'
+            className='w-full h-full object-cover opacity-50 filter blur-[2px]'
             src={URL_IMG(backgroundPath, 'original')}
             alt=''
           />
           {/* Gradient overlay */}
-          <div className='absolute inset-0 bg-gradient-to-t from-dark via-dark/50 via-dark/50 to-transparent' />
+          <div className='absolute inset-0 bg-gradient-to-b from-[#0B0000]/75 via-transparent to-transparent' />
+          <div className='absolute inset-0 bg-gradient-to-t from-dark to-transparent' />
         </div>
       )}
-
       <Header />
       <Outlet />
       {popup && <Popup data={popup} onClose={closePopup} />}

@@ -40,8 +40,8 @@ const MovieInfo: React.FC = () => {
 
   return (
     <div className='grid grid-cols-1 gap-5 place-content-center w-full'>
-      <section className='flex gap-x-10 overflow-y-hidden relative'>
-        <div className='relative'>
+      <section className='flex gap-x-10 overflow-y-hidden relative items-center'>
+        <div className='relative '>
           <img
             src={
               movieInfo.poster_path ?? movieInfo.poster_path

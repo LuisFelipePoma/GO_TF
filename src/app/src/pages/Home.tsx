@@ -55,7 +55,10 @@ const Home: React.FC = () => {
         type='text'
         placeholder='Search by movie title, genre, keywords or actors.'
         className='w-[35%] p-2 text-body-20 rounded-sm drop-shadow-sm
-        outline-none self-end bg-dark border-b border-secondary text-primary placeholder:text-gray '
+         outline-none self-end bg-dark border-b border-secondary text-primary
+         placeholder:text-gray transition-all duration-300 ease-in-out 
+         hover:bg-gray-800 hover:border-primary focus:bg-gray-700 focus:border-primary 
+         focus:shadow-lg transform hover:scale-105 focus:scale-105'
         value={query}
         onChange={handleQuery}
       />
