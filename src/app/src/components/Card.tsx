@@ -44,6 +44,7 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
 
   const handleMovieClick = (movie: MovieResponse) => {
     if (!movieInfo) return
+    console.log(movieInfo)
     navigate(`/movie/${movie.id}`, { state: { movie, movieInfo } })
     // also take to the top of the page
     window.scrollTo(0, 0)
@@ -66,9 +67,9 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
           duration={2}
         />
       ) : (
-        <div className='overflow-hidden w-full h-[300px] rounded-md relative'>
+        <div className='overflow-hidden w-full h-[300px] rounded-md relative select-none'>
           <img
-            className='w-full h-full object-cover transition-transform duration-1000 ease-in-out transform group-hover:scale-100 scale-110
+            className='w-full h-full object-cover transition-all duration-1000 ease-in-out transform group-hover:scale-100 scale-110
             filter grayscale-[55%] group-hover:grayscale-[15%]'
             src={
               posterPath && posterPath.startsWith('https')
@@ -79,7 +80,7 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
           />
           <div
             className='opacity-0 group-hover:opacity-100 absolute top-0 left-0 w-full h-full bg-[#0B0000]/20 bg-opacity-50 
-          transition-opacity duration-300 ease-in-out'
+          transition-all duration-1000 ease-in-out'
           >
             <article className='flex flex-wrap gap-2 items-start p-4'>
               {movieInfo.genres?.map(genre => (
@@ -94,7 +95,7 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
           </div>
         </div>
       )}
-      <section className='flex flex-col gap-5 justify-center h-[95px]'>
+      <section className='flex flex-col justify-between py-2 h-[110px] '>
         <h5 className='h-fit text-body-16 group-hover:underline line-clamp-2'>
           {movieInfo.title} (
           {movieInfo.release_date

@@ -16,7 +16,7 @@ export const Popup: React.FC<{ data: PopupData; onClose: () => void }> = ({
 
   useEffect(() => {
     setIsVisible(true)
-  }, [])
+  }, [data.id])
 
   const handleClose = () => {
     setIsVisible(false)
@@ -25,21 +25,22 @@ export const Popup: React.FC<{ data: PopupData; onClose: () => void }> = ({
 
   return (
     <div
-      className={`transition-all duration-300 ease-in fixed top-0 right-0 bg-black bg-opacity-50 w-[300px] ${
+      className={`transition-all duration-300 ease-in fixed top-0 right-0 bg-[#0B0000]/60 w-fit${
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       }`}
     >
-      <article className='bg-transparent backdrop-blur-lg p-4 rounded relative w-full'>
-        <p className='text-body-20 font-bold text-left h-[75px] w-full'>
+      <article className='h-full backdrop-blur-md p-3 rounded relative w-[275px]'>
+        <p className='text-body-20 font-bold text-left h-[75px] w-[200px]'>
           Peliculas para el Usuario {data.id}
         </p>
-        <section className='max-h-[1050px] overflow-y-hidden hover:overflow-y-auto no-scrollbar flex flex-col gap-5 items-center '>
+        <section
+          className='pt-[300px] max-h-[1000px] overflow-y-hidden hover:overflow-y-auto no-scrollbar 
+        flex flex-col gap-5 items-center w-full justify-center'
+        >
           {data.message.map(movie => (
             <Card
               key={'PopUp-' + movie.id}
               movie={{ id: movie.id! } as MovieResponse}
-              width={100}
-              height={350}
             />
           ))}
         </section>

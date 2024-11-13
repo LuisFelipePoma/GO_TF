@@ -64,8 +64,8 @@ type TaskData struct {
 }
 
 type TaskRecomendations struct {
-	Title       string `json:"title"`
-	TargetMovie Movie  `json:"movie"`
+	MovieId     int   `json:"movie_id"`
+	TargetMovie Movie `json:"movie"`
 }
 
 type TaskSearchQuery struct {

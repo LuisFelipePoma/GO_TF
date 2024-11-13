@@ -24,7 +24,7 @@ const MovieInfo: React.FC = () => {
     let isMounted = true
 
     setLoading(true)
-    getRecommendations(movie.title!, 20).then(res => {
+    getRecommendations(movieInfo.id!, 21).then(res => {
       if (isMounted) {
         setRecomendations(res.movie_response!)
         setLoading(false)
@@ -36,7 +36,7 @@ const MovieInfo: React.FC = () => {
       isMounted = false
       setBackgroundPath(null)
     }
-  }, [movie, movieInfo.backdrop_path, setBackgroundPath])
+  }, [movieInfo, setBackgroundPath])
 
   return (
     <div className='grid grid-cols-1 gap-5 place-content-center w-full'>
@@ -47,30 +47,37 @@ const MovieInfo: React.FC = () => {
               ? URL_IMG(movieInfo.poster_path, 'w300')
               : PLACEHOLDER_URL
           }
-          alt={movie.title}
+          alt={movieInfo.title}
           className='min-w-[300px] max-w-[300px] h-auto rounded-md filter drop-shadow-md brightness-90 hover:brightness-100
-             transition-all duration-1000 ease-in-out'
+             transition-all duration-1000 ease-in-out select-none pointer-events-none'
         />
 
-        <article className='flex flex-col gap-3 justify-start gap-y-10 '>
-          <h3 className='underline leading-none font-semibold flex justify-between'>
-            {movie.title} (
-            {movieInfo?.release_date
-              ? new Date(movieInfo.release_date).getFullYear()
-              : '20XX'}
-            )
-            <VoteAvg vote_average={movieInfo.vote_average} className='text-body-20 '/>
-          </h3>
-          <p className='text-body-20'>{movie.overview}</p>
-          <div className='flex gap-x-4 select-none'>
-            {movie.genres?.split(',').map((genre, i) => (
-              <span
-                className='px-2 py-1 bg-secondary rounded-md hover:bg-tertiary transition-colors duration-500 ease-in-out'
-                key={i}
-              >
-                {genre}
-              </span>
-            ))}
+        <article className='flex flex-col h-full gap-3 justify-between gap-y-10 '>
+          <div className='flex justify-between'>
+            <h3 className='underline leading-none font-semibold '>
+              {movieInfo.title} (
+              {movieInfo?.release_date
+                ? new Date(movieInfo.release_date).getFullYear()
+                : '20XX'}
+              )
+            </h3>
+            <VoteAvg
+              vote_average={movieInfo.vote_average}
+              className='text-body-20 h-fit py-2'
+            />
+          </div>
+          <div className='flex flex-col gap-5'>
+            <p className='text-body-20'>{movieInfo.overview}</p>
+            <p className='flex flex-wrap gap-3'>
+              {movieInfo.genres!.map((genre, i) => (
+                <span
+                  className='w-fit px-2 py-1 bg-secondary rounded-md hover:bg-tertiary transition-colors duration-500 ease-in-out'
+                  key={`${i}-genre${genre.id}`}
+                >
+                  {genre.name}
+                </span>
+              ))}
+            </p>
           </div>
           <div className='flex flex-col gap-2 text-balance'>
             <p>

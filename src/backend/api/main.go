@@ -18,13 +18,6 @@ var nodeMasterPort = os.Getenv("MASTER_NODE") // Puerto del nodo maestro
 
 var upgrader = websocket.Upgrader{} // Utilizado para actualizar la conexión HTTP a WebSocket
 var clients = make(map[*websocket.Conn]bool)
-var broadcast = make(chan []types.MovieResponse)
-
-// Client represents a connected client
-type Client struct {
-	conn *websocket.Conn
-	send chan []byte
-}
 
 // Message represents the recommendation message structure
 type Message struct {
@@ -145,10 +138,10 @@ func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Obtener y validar 'title'
-	title, ok := data["title"].(string)
-	if !ok || title == "" {
-		http.Error(w, "Title is required and must be a string", http.StatusBadRequest)
+	// Obtener y validar 'id'
+	id, ok := data["id"].(float64)
+	if !ok {
+		http.Error(w, "ID is required and must be a number", http.StatusBadRequest)
 		return
 	}
 
@@ -159,14 +152,14 @@ func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	quantity := int(nFloat)
-
+	movieId := int(id)
 	// Create a request
 	request := types.TaskDistributed{
 		Type: types.TaskRecomend,
 		Data: types.TaskData{
 			Quantity: quantity,
 			TaskRecomendations: &types.TaskRecomendations{
-				Title: title,
+				MovieId: movieId,
 			},
 		},
 	}

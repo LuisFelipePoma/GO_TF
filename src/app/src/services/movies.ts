@@ -37,7 +37,7 @@ export const getMoviesByQuery = async (
 
 // Service to get the recommendations by title
 export const getRecommendations = async (
-  title: string,
+  id: number,
   n: number
 ): Promise<Response> => {
   try {
@@ -46,7 +46,7 @@ export const getRecommendations = async (
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ title, n })
+      body: JSON.stringify({ id, n })
     })
     if (!response.ok) {
       throw new Error(`Error fetching recommendations: ${response.statusText}`)
@@ -57,7 +57,6 @@ export const getRecommendations = async (
     throw error
   }
 }
-
 
 // Service to get the image
 export const getTmdbInfo = async (id: number): Promise<TmdbResponse> => {

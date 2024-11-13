@@ -1,7 +1,7 @@
 // src/components/Layout.tsx
 import React, { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import Header from './Header'
+import { Header } from './Header'
 import { Response } from '../types/movies'
 import { Popup, PopupData } from './PopUp'
 import { useStore } from '../services/store'
@@ -28,13 +28,13 @@ const Layout: React.FC = () => {
           id: data.target_movie ?? '0'
         })
 
-        // Ocultar el popup después de 10 segundos
-        const hidePopupTimer = setTimeout(() => {
-          setPopup(null)
-        }, 10000)
+        // // Ocultar el popup después de 10 segundos
+        // const hidePopupTimer = setTimeout(() => {
+        //   setPopup(null)
+        // }, 10000)
 
         // Limpieza del hidePopupTimer si el componente se desmonta antes
-        return () => clearTimeout(hidePopupTimer)
+        // return () => clearTimeout(hidePopupTimer)
       }, 3000)
 
       // Limpieza del showPopupTimer si el componente se desmonta antes
@@ -65,7 +65,7 @@ const Layout: React.FC = () => {
       {backgroundPath && (
         <div className='absolute inset-0 -z-10 overflow-hidden'>
           <img
-            className='w-full h-full object-cover opacity-50 filter blur-[2px]'
+            className='w-full h-full object-cover opacity-50 filter blur-[1.5px]'
             src={URL_IMG(backgroundPath, 'original')}
             alt=''
           />

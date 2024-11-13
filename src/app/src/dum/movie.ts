@@ -10,10 +10,10 @@ export const MovieInfoDummie: TmdbResponse = {
     { id: 12, name: 'Adventure' }
   ],
   homepage: 'https://www.example.com',
-  id: 12345,
+  id: -1,
   imdb_id: 'tt1234567',
   original_language: 'en',
-  original_title: 'Example Movie',
+  original_title: '--------',
   overview: 'This is a sample overview of the movie.',
   popularity: 150.5,
   poster_path: '/path/to/poster.jpg',
@@ -42,8 +42,8 @@ export const MovieInfoDummie: TmdbResponse = {
   ],
   status: 'Released',
   tagline: 'An example tagline.',
-  title: 'Example Movie',
+  title: 'Movie Not Found',
   video: false,
-  vote_average: 8.5,
+  vote_average: 0.5,
   vote_count: 2500
 }

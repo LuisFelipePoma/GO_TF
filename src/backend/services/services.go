@@ -83,6 +83,16 @@ func (m *Movies) GetMovieByTitle(title string) *types.Movie {
 	return nil
 }
 
+// GetMovieByTitle returns a movie by id.
+func (m *Movies) GetMovieById(idMovie int) (*types.Movie, error) {
+	for _, movie := range m.Movies {
+		if movie.ID == idMovie {
+			return &movie, nil
+		}
+	}
+	return nil, fmt.Errorf("movie with ID %d not found", idMovie)
+}
+
 func (m *Movies) GetRandomUserID() int {
 	if len(m.UserRatings) == 0 {
 		return 0 // or handle the empty case as needed

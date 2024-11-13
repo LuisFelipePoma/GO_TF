@@ -7,7 +7,7 @@ import { MovieResponse } from '../types/movies'
 import { useDebounce } from 'use-debounce' // Import useDebounce
 
 const N_MOVIES = 21
-const DEBOUNCE_DELAY = 500 // milliseconds
+const DEBOUNCE_DELAY = 750 // milliseconds
 
 const Home: React.FC = () => {
   const [movies, setMovies] = useState<MovieResponse[]>([])

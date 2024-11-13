@@ -131,11 +131,14 @@ func handleRequest(conn net.Conn) {
 func similarMoviesHandler(task types.TaskDistributed) types.Response {
 	// get data from task
 	data := task.Data.TaskRecomendations
-	fmt.Printf("Recomendacion para %+v\n", data.Title)
+	fmt.Printf("Recomendacion para %+v\n", data.MovieId)
 
 	// Get the data from the task
 	n_recomendations := task.Data.Quantity
-	movieTarget := *moviesService.GetMovieByTitle(data.Title)
+	movieTarget, err := moviesService.GetMovieById(data.MovieId)
+	if err != nil {
+		return types.Response{Error: fmt.Sprintf("Error getting movie by ID: %v", err)}
+	}
 
 	// update the task to the new ranges for each node
 	var tasks []types.TaskDistributed
@@ -145,8 +148,8 @@ func similarMoviesHandler(task types.TaskDistributed) types.Response {
 			Data: types.TaskData{
 				Movies: movies[r[0]:r[1]],
 				TaskRecomendations: &types.TaskRecomendations{
-					Title:       movieTarget.Title,
-					TargetMovie: movieTarget,
+					MovieId:     movieTarget.ID,
+					TargetMovie: *movieTarget,
 				},
 			},
 		}
