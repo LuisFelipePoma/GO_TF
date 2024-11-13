@@ -5,9 +5,9 @@ import { getRecommendations } from '../services/movies'
 import { ListMovies } from '../components/ListMovies'
 import Skeleton from 'react-loading-skeleton'
 import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
-import { averageStyles } from '../consts/styles'
 import { TmdbResponse } from '../types/tmdb'
 import { useStore } from '../services/store'
+import { VoteAvg } from '../components/VoteAvg'
 
 const MovieInfo: React.FC = () => {
   const location = useLocation()
@@ -41,32 +41,25 @@ const MovieInfo: React.FC = () => {
   return (
     <div className='grid grid-cols-1 gap-5 place-content-center w-full'>
       <section className='flex gap-x-10 overflow-y-hidden relative items-center'>
-        <div className='relative '>
-          <img
-            src={
-              movieInfo.poster_path ?? movieInfo.poster_path
-                ? URL_IMG(movieInfo.poster_path, 'w300')
-                : PLACEHOLDER_URL
-            }
-            alt={movie.title}
-            className='min-w-[300px] max-w-[300px] h-auto rounded-md filter drop-shadow-md brightness-90 hover:brightness-100
+        <img
+          src={
+            movieInfo.poster_path ?? movieInfo.poster_path
+              ? URL_IMG(movieInfo.poster_path, 'w300')
+              : PLACEHOLDER_URL
+          }
+          alt={movie.title}
+          className='min-w-[300px] max-w-[300px] h-auto rounded-md filter drop-shadow-md brightness-90 hover:brightness-100
              transition-all duration-1000 ease-in-out'
-          />
-          <span
-            className={`drop-shadow-md select-none absolute top-2 right-2 rounded-full w-fit h-fit font-bold text-black px-2 py-1 ${averageStyles(
-              movie.vote_average!
-            )}`}
-          >
-            {movie.vote_average?.toPrecision(2)}
-          </span>
-        </div>
+        />
+
         <article className='flex flex-col gap-3 justify-start gap-y-10 '>
-          <h3 className='underline leading-none font-semibold'>
+          <h3 className='underline leading-none font-semibold flex justify-between'>
             {movie.title} (
             {movieInfo?.release_date
               ? new Date(movieInfo.release_date).getFullYear()
               : '20XX'}
             )
+            <VoteAvg vote_average={movieInfo.vote_average} className='text-body-20 '/>
           </h3>
           <p className='text-body-20'>{movie.overview}</p>
           <div className='flex gap-x-4 select-none'>

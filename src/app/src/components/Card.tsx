@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom'
 import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { MovieResponse } from '../types/movies'
 import { TmdbResponse } from '../types/tmdb'
-import { averageStyles } from '../consts/styles'
 import { MovieInfoDummie } from '../dum/movie'
+import { VoteAvg } from './VoteAvg'
 
 interface CardProps {
   movie: MovieResponse
@@ -51,8 +51,8 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
 
   return (
     <a
-      className={`w-fit max-h-[450px] min-h-[${height}px] h-auto min-w-[${width}px] group rounded-md hover:bg-slate-50/5
-       transition-all duration-300 ease-in-out hover:drop-shadow-2xl cursor-pointer`}
+      className={`h-[${height}px] w-[${width}px] group rounded-md 
+        transition-all duration-300 ease-in-out hover:drop-shadow-2xl cursor-pointer relative`}
       onClick={() => handleMovieClick(movie)}
     >
       {loading ? (
@@ -66,11 +66,10 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
           duration={2}
         />
       ) : (
-        <div className='overflow-hidden w-full h-[300px] rounded-md'>
+        <div className='overflow-hidden w-full h-[300px] rounded-md relative'>
           <img
-            className='w-full h-full object-cover transition-all duration-1000 ease-in-out transform group-hover:scale-100 scale-110
-            filter grayscale-[60%] group-hover:grayscale-[25%]
-            '
+            className='w-full h-full object-cover transition-transform duration-1000 ease-in-out transform group-hover:scale-100 scale-110
+            filter grayscale-[55%] group-hover:grayscale-[15%]'
             src={
               posterPath && posterPath.startsWith('https')
                 ? PLACEHOLDER_URL
@@ -78,36 +77,35 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
             }
             alt={movieInfo.title}
           />
+          <div
+            className='opacity-0 group-hover:opacity-100 absolute top-0 left-0 w-full h-full bg-[#0B0000]/20 bg-opacity-50 
+          transition-opacity duration-300 ease-in-out'
+          >
+            <article className='flex flex-wrap gap-2 items-start p-4'>
+              {movieInfo.genres?.map(genre => (
+                <span
+                  className='px-2 py-1 bg-secondary text-body-12 uppercase rounded-md hover:bg-tertiary transition-colors duration-300 ease-in-out cursor-pointer'
+                  key={genre.id}
+                >
+                  {genre.name}
+                </span>
+              ))}
+            </article>
+          </div>
         </div>
       )}
-      <section className='grid py-2 px-2 gap-2 h-[100px] w-full'>
-        <article className='flex w-full justify-between min-h-[25px]'>
-          <h5 className='h-full text-body-16 group-hover:underline line-clamp-2'>
-            {movieInfo.title} (
-            {movieInfo?.release_date
-              ? new Date(movieInfo.release_date).getFullYear()
-              : '20XX'}
-            )
-          </h5>
-          <p
-            className={`hover:brightness-110 transition-all duration-1000 ease-in-out 
-                  text-body-14 rounded-full w-fit h-fit font-bold text-black px-2 py-1 ${averageStyles(
-                    movieInfo.vote_average!
-                  )}`}
-          >
-            {movieInfo.vote_average?.toPrecision(2)}
-          </p>
-        </article>
-        <div className='flex flex-wrap gap-1 items-start'>
-          {movieInfo.genres?.map(genre => (
-            <span
-              className='w-fit h-fit text-body-12 upper px-[0.3rem] py-[0.1rem] bg-secondary rounded-md hover:bg-tertiary transition-colors duration-500 ease-in-out'
-              key={genre.id}
-            >
-              {genre.name}
-            </span>
-          ))}
-        </div>
+      <section className='flex flex-col gap-5 justify-center h-[95px]'>
+        <h5 className='h-fit text-body-16 group-hover:underline line-clamp-2'>
+          {movieInfo.title} (
+          {movieInfo.release_date
+            ? new Date(movieInfo.release_date).getFullYear()
+            : '20XX'}
+          )
+        </h5>
+        <VoteAvg
+          vote_average={movieInfo.vote_average}
+          className='text-body-12 w-fit h-fit transition-transform duration-300 ease-in-out hover:scale-105 p-4'
+        />
       </section>
     </a>
   )

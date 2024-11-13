@@ -25,7 +25,7 @@ export const Popup: React.FC<{ data: PopupData; onClose: () => void }> = ({
 
   return (
     <div
-      className={`transition-all duration-300 ease-in fixed top-0 right-0 bg-black bg-opacity-50 w-[350px] ${
+      className={`transition-all duration-300 ease-in fixed top-0 right-0 bg-black bg-opacity-50 w-[300px] ${
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       }`}
     >
@@ -44,7 +44,7 @@ export const Popup: React.FC<{ data: PopupData; onClose: () => void }> = ({
           ))}
         </section>
         <button
-          className='fixed top-4 right-1 w-10 h-10 bg-primary text-light rounded-full flex justify-center items-center shadow-lg transition transform hover:bg-secondary hover:rotate-90 hover:scale-110 duration-300 ease-out'
+          className='fixed top-4 right-2 w-10 h-10 bg-primary text-light rounded-full flex justify-center items-center shadow-lg transition transform hover:bg-secondary hover:rotate-90 hover:scale-110 duration-300 ease-out'
           onClick={handleClose}
           aria-label='Close popup'
         >
