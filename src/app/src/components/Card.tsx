@@ -7,16 +7,19 @@ import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { MovieResponse } from '../types/movies'
 import { TmdbResponse } from '../types/tmdb'
 import { averageStyles } from '../consts/styles'
+import { MovieInfoDummie } from '../dum/movie'
 
 interface CardProps {
   movie: MovieResponse
+  width?: number
+  height?: number
 }
 
-const Card: React.FC<CardProps> = ({ movie }) => {
+const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
   const [posterPath, setPosterPath] = useState(
     movie.poster_path ?? PLACEHOLDER_URL
   )
-  const [movieInfo, setMovieInfo] = useState<TmdbResponse>()
+  const [movieInfo, setMovieInfo] = useState<TmdbResponse>(MovieInfoDummie)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
@@ -48,8 +51,8 @@ const Card: React.FC<CardProps> = ({ movie }) => {
 
   return (
     <a
-      className='w-fit h-fit max-h-[450px] min-h-[400px] min-w-[200px] group rounded-md hover:bg-slate-50/5
-       transition-all duration-300 ease-in-out hover:drop-shadow-2xl cursor-pointer'
+      className={`w-fit max-h-[450px] min-h-[${height}px] h-auto min-w-[${width}px] group rounded-md hover:bg-slate-50/5
+       transition-all duration-300 ease-in-out hover:drop-shadow-2xl cursor-pointer`}
       onClick={() => handleMovieClick(movie)}
     >
       {loading ? (
@@ -73,14 +76,14 @@ const Card: React.FC<CardProps> = ({ movie }) => {
                 ? PLACEHOLDER_URL
                 : URL_IMG(posterPath)
             }
-            alt={movie.title}
+            alt={movieInfo.title}
           />
         </div>
       )}
       <section className='grid py-2 px-2 gap-2 h-[100px] w-full'>
         <article className='flex w-full justify-between min-h-[25px]'>
           <h5 className='h-full text-body-16 group-hover:underline line-clamp-2'>
-            {movie.title} (
+            {movieInfo.title} (
             {movieInfo?.release_date
               ? new Date(movieInfo.release_date).getFullYear()
               : '20XX'}
@@ -89,19 +92,19 @@ const Card: React.FC<CardProps> = ({ movie }) => {
           <p
             className={`hover:brightness-110 transition-all duration-1000 ease-in-out 
                   text-body-14 rounded-full w-fit h-fit font-bold text-black px-2 py-1 ${averageStyles(
-                    movie.vote_average!
+                    movieInfo.vote_average!
                   )}`}
           >
-            {movie.vote_average?.toPrecision(2)}
+            {movieInfo.vote_average?.toPrecision(2)}
           </p>
         </article>
         <div className='flex flex-wrap gap-1 items-start'>
-          {movie.genres?.split(',').map(genre => (
+          {movieInfo.genres?.map(genre => (
             <span
               className='w-fit h-fit text-body-12 upper px-[0.3rem] py-[0.1rem] bg-secondary rounded-md hover:bg-tertiary transition-colors duration-500 ease-in-out'
-              key={genre}
+              key={genre.id}
             >
-              {genre}
+              {genre.name}
             </span>
           ))}
         </div>

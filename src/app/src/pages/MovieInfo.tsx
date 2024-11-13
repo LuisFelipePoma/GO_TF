@@ -7,6 +7,7 @@ import Skeleton from 'react-loading-skeleton'
 import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { averageStyles } from '../consts/styles'
 import { TmdbResponse } from '../types/tmdb'
+import { useStore } from '../services/store'
 
 const MovieInfo: React.FC = () => {
   const location = useLocation()
@@ -16,6 +17,8 @@ const MovieInfo: React.FC = () => {
     []
   )
   const [loading, setLoading] = React.useState<boolean>(true)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setBackgroundPath = useStore((state: any) => state.setBackgroundPath)
 
   useEffect(() => {
     let isMounted = true
@@ -28,19 +31,21 @@ const MovieInfo: React.FC = () => {
       }
     })
 
+    setBackgroundPath(movieInfo.backdrop_path)
     return () => {
       isMounted = false
+      setBackgroundPath(null)
     }
-  }, [movie])
+  }, [movie, movieInfo.backdrop_path, setBackgroundPath])
 
   return (
     <div className='grid grid-cols-1 gap-5 place-content-center w-full'>
-      <section className='flex gap-x-10 overflow-y-hidden'>
+      <section className='flex gap-x-10 overflow-y-hidden relative'>
         <div className='relative'>
           <img
             src={
               movieInfo.poster_path ?? movieInfo.poster_path
-                ? URL_IMG(movieInfo.poster_path, 300)
+                ? URL_IMG(movieInfo.poster_path, 'w300')
                 : PLACEHOLDER_URL
             }
             alt={movie.title}
@@ -55,8 +60,7 @@ const MovieInfo: React.FC = () => {
             {movie.vote_average?.toPrecision(2)}
           </span>
         </div>
-
-        <article className='flex flex-col gap-3 justify-start gap-y-10'>
+        <article className='flex flex-col gap-3 justify-start gap-y-10 '>
           <h3 className='underline leading-none font-semibold'>
             {movie.title} (
             {movieInfo?.release_date

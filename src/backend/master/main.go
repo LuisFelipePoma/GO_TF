@@ -385,6 +385,9 @@ func senTaskToNode(node string, task types.TaskDistributed) ([]types.MovieRespon
 		return nil, err
 	}
 
+	// Set time out for the connection of 35s
+	conn.SetDeadline(time.Now().Add(20 * time.Second))
+
 	// Send the data to the node
 	_, err = conn.Write(data)
 	if err != nil {

@@ -2,38 +2,18 @@
 import React, { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
-import { MovieResponse, Response } from '../types/movies'
-
-interface PopupData {
-  title: string
-  message: MovieResponse[]
-}
-
-const Popup: React.FC<{ data: PopupData; onClose: () => void }> = ({
-  data,
-  onClose
-}) => (
-  <div className='fixed top-2 right-2 bg-black bg-opacity-50 flex justify-center items-center'>
-    <div className='bg-transparent backdrop-blur-lg p-4 rounded'>
-      <h2 className='text-xl font-bold'>{data.title}</h2>
-      {data.message.map(movie => (
-        <p className='mt-2'>{movie.id}</p>
-      ))}
-      <button
-        className='mt-4 px-4 py-2 bg-blue-500 text-white rounded'
-        onClick={onClose}
-      >
-        Cerrar
-      </button>
-    </div>
-  </div>
-)
+import { Response } from '../types/movies'
+import { Popup, PopupData } from './PopUp'
+import { useStore } from '../services/store'
+import { URL_IMG, URL_WS } from '../consts/api'
 
 const Layout: React.FC = () => {
   const [popup, setPopup] = useState<PopupData | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const backgroundPath = useStore((state: any) => state.backgroundPath)
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:3000/ws')
+    const socket = new WebSocket(URL_WS)
 
     socket.onopen = () => {
       console.log('Conexión WebSocket establecida')
@@ -41,22 +21,21 @@ const Layout: React.FC = () => {
 
     socket.onmessage = event => {
       const data: Response = JSON.parse(event.data)
-      console.log('Datos recibidos:', data)
-      // Mostrar el popup después de 5 segundos
+      // Mostrar el popup después de 3 segundos
       const showPopupTimer = setTimeout(() => {
         setPopup({
-          title: 'Nueva Información',
-          message: data.movie_response || []
+          message: data.movie_response || [],
+          id: data.target_movie ?? '0'
         })
 
-        // Ocultar el popup después de 5 segundos
+        // Ocultar el popup después de 10 segundos
         const hidePopupTimer = setTimeout(() => {
           setPopup(null)
-        }, 5000)
+        }, 10000)
 
         // Limpieza del hidePopupTimer si el componente se desmonta antes
         return () => clearTimeout(hidePopupTimer)
-      }, 5000)
+      }, 3000)
 
       // Limpieza del showPopupTimer si el componente se desmonta antes
       return () => clearTimeout(showPopupTimer)
@@ -81,7 +60,20 @@ const Layout: React.FC = () => {
   }
 
   return (
-    <div className='grid place-items-center w-[100vw] h-[100vh] px-[10vw]'>
+    <div className='grid place-items-center w-[100vw] h-[100vh] px-[10vw] relative'>
+      {/* Background image with gradient overlay */}
+      {backgroundPath && (
+        <div className='absolute inset-0 -z-10'>
+          <img
+            className='w-full h-full object-cover opacity-40 filter blur-[0.5px]'
+            src={URL_IMG(backgroundPath, 'original')}
+            alt=''
+          />
+          {/* Gradient overlay */}
+          <div className='absolute inset-0 bg-gradient-to-t from-dark via-dark/50 via-dark/50 to-transparent' />
+        </div>
+      )}
+
       <Header />
       <Outlet />
       {popup && <Popup data={popup} onClose={closePopup} />}
