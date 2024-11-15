@@ -8,6 +8,7 @@ import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { TmdbResponse } from '../types/tmdb'
 import { useStore } from '../services/store'
 import { VoteAvg } from '../components/VoteAvg'
+import { motion } from 'framer-motion'
 
 const MovieInfo: React.FC = () => {
   const location = useLocation()
@@ -39,47 +40,53 @@ const MovieInfo: React.FC = () => {
   }, [movieInfo, setBackgroundPath])
 
   return (
-    <div className='grid grid-cols-1 gap-5 place-content-center w-full'>
-      <section className='flex gap-x-10 overflow-y-hidden relative items-center'>
-        <img
-          src={
-            movieInfo.poster_path ?? movieInfo.poster_path
-              ? URL_IMG(movieInfo.poster_path, 'w300')
-              : PLACEHOLDER_URL
-          }
-          alt={movieInfo.title}
-          className='min-w-[300px] max-w-[300px] h-auto rounded-md filter drop-shadow-md brightness-90 hover:brightness-100
-             transition-all duration-1000 ease-in-out select-none pointer-events-none'
-        />
-
-        <article className='flex flex-col h-full gap-3 justify-between gap-y-10 '>
-          <div className='flex justify-between'>
-            <h3 className='underline leading-none font-semibold '>
-              {movieInfo.title} (
-              {movieInfo?.release_date
-                ? new Date(movieInfo.release_date).getFullYear()
-                : '20XX'}
-              )
-            </h3>
-            <VoteAvg
-              vote_average={movieInfo.vote_average}
-              className='text-body-20 h-fit py-2'
-            />
-          </div>
-          <div className='flex flex-col gap-5'>
-            <p className='text-body-20'>{movieInfo.overview}</p>
-            <p className='flex flex-wrap gap-3'>
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      transition={{ duration: 0.5 }}
+      className='grid grid-cols-1 gap-5 place-content-center w-[100%]'
+    >
+      <section className='flex gap-5 h-[500px] w-full items-center'>
+        <div className='flex-shrink-0 '>
+          <img
+            src={
+              movieInfo.poster_path
+                ? URL_IMG(movieInfo.poster_path, 'w300')
+                : PLACEHOLDER_URL
+            }
+            alt={movieInfo.title}
+            className='w-[300px] h-[450px] rounded-md self-center filter drop-shadow-md  brightness-95 hover:brightness-105 transition-all duration-1000 ease-in-out'
+          />
+        </div>
+        <div className='flex flex-auto flex-col h-full gap-3 justify-between gap-y-10 '>
+          <article className='flex justify-between items-center'>
+            <section className='flex flex-col gap-3'>
+              <h3 className='underline font-semibold text-balance pr-1'>
+                {movieInfo.title} (
+                {movieInfo?.release_date
+                  ? new Date(movieInfo.release_date).getFullYear()
+                  : '20XX'}
+                )
+              </h3>
+              <p>{movieInfo.tagline}</p>
+            </section>
+            <VoteAvg vote_average={movieInfo.vote_average} />
+          </article>
+          <article className='flex flex-col gap-5'>
+            <p className='text-body-16 text-balance'>{movieInfo.overview}</p>
+            <p className='flex flex-wrap gap-3 select-none'>
               {movieInfo.genres!.map((genre, i) => (
                 <span
-                  className='w-fit px-2 py-1 bg-secondary rounded-md hover:bg-tertiary transition-colors duration-500 ease-in-out'
+                  className='w-fit px-3 py-1 bg-secondary rounded-md hover:bg-primary transition-colors duration-500 ease-in-out'
                   key={`${i}-genre${genre.id}`}
                 >
                   {genre.name}
                 </span>
               ))}
             </p>
-          </div>
-          <div className='flex flex-col gap-2 text-balance'>
+          </article>
+          <article className='flex flex-col gap-2 text-balance'>
             <p>
               <span className='font-bold text-primary'>Release Date: </span>
               {/* Format to 19 November, 2015 */}
@@ -103,8 +110,8 @@ const MovieInfo: React.FC = () => {
                 {movie.characters?.split(',').join(', ')}
               </p>
             </section>
-          </div>
-        </article>
+          </article>
+        </div>
       </section>
       <section className='flex flex-col gap-5'>
         <h4 className=''>Peliculas Similares</h4>
@@ -115,10 +122,12 @@ const MovieInfo: React.FC = () => {
                 key={i}
                 width={200}
                 height={300}
-                className='bg-primary'
-                baseColor='#202020'
-                highlightColor='#444'
+                baseColor='#0B0000'
+                highlightColor='#ba0c0c2f'
                 borderRadius='10px'
+                direction='rtl'
+                enableAnimation={true}
+                duration={4}
               />
             ))
           ) : (
@@ -126,7 +135,7 @@ const MovieInfo: React.FC = () => {
           )}
         </div>
       </section>
-    </div>
+    </motion.div>
   )
 }
 

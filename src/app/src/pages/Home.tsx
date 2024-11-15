@@ -2,9 +2,10 @@
 import React, { useEffect, useState } from 'react'
 import { getAllMovies, getMoviesByQuery } from '../services/movies'
 import { ListMovies } from '../components/ListMovies'
-import { Loading } from '../components/Loading'
 import { MovieResponse } from '../types/movies'
 import { useDebounce } from 'use-debounce' // Import useDebounce
+import { Loader } from '../components/Loader'
+import { motion } from 'framer-motion'
 
 const N_MOVIES = 21
 const DEBOUNCE_DELAY = 750 // milliseconds
@@ -50,20 +51,26 @@ const Home: React.FC = () => {
   }
 
   return (
-    <section className='flex flex-col gap-10 h-[85vh] w-full'>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1.65}}
+      className='flex flex-col gap-10 h-[85vh] w-full'
+    >
       <input
         type='text'
         placeholder='Search by movie title, genre, keywords or actors.'
-        className='w-[35%] p-2 text-body-20 rounded-sm drop-shadow-sm
-         outline-none self-end bg-dark border-b border-secondary text-primary
+        className='w-[35%] p-2 text-body-16 rounded-sm 
+         outline-none self-end bg-transparent border-b-2 border-secondary text-light
          placeholder:text-gray transition-all duration-300 ease-in-out 
          hover:bg-gray-800 hover:border-primary focus:bg-gray-700 focus:border-primary 
-         focus:shadow-lg transform hover:scale-105 focus:scale-105'
+         focus:shadow-lg transform hover:scale-105 focus:scale-105 backdrop-blur-sm'
         value={query}
         onChange={handleQuery}
       />
-      {loading ? <Loading /> : <ListMovies movies={movies} />}
-    </section>
+      {loading ? <Loader /> : <ListMovies movies={movies} />}
+    </motion.div>
   )
 }
 

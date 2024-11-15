@@ -27,7 +27,7 @@ export const Popup: React.FC<{ data: PopupData; onClose: () => void }> = ({
     <div
       className={`transition-all duration-300 ease-in fixed top-0 right-0 bg-[#0B0000]/60 w-fit${
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-      }`}
+      } shadow-2xl`}
     >
       <article className='h-full backdrop-blur-md p-3 rounded relative w-[275px]'>
         <p className='text-body-20 font-bold text-left h-[75px] w-[200px]'>

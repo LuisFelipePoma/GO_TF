@@ -7,15 +7,14 @@ import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { MovieResponse } from '../types/movies'
 import { TmdbResponse } from '../types/tmdb'
 import { MovieInfoDummie } from '../dum/movie'
-import { VoteAvg } from './VoteAvg'
+import { Popularity } from './Popularity'
+import { StarRating } from './StartRating'
 
 interface CardProps {
   movie: MovieResponse
-  width?: number
-  height?: number
 }
 
-const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
+const Card: React.FC<CardProps> = ({ movie }) => {
   const [posterPath, setPosterPath] = useState(
     movie.poster_path ?? PLACEHOLDER_URL
   )
@@ -38,8 +37,9 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
       })
       .catch(() => {
         setPosterPath(PLACEHOLDER_URL)
+        // setLoading(false)
       })
-      .finally(() => setLoading(false))
+    // .finally(() => setLoading(false))
   }, [movie.id, movie.poster_path])
 
   const handleMovieClick = (movie: MovieResponse) => {
@@ -52,37 +52,48 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
 
   return (
     <a
-      className={`h-[${height}px] w-[${width}px] group rounded-md 
-        transition-all duration-300 ease-in-out hover:drop-shadow-2xl cursor-pointer relative`}
+      className={`h-[400px] w-[200px] group rounded-md 
+        transition-all duration-300 ease-in-out hover:drop-shadow-2xl 
+        hover:bg-dark/70 cursor-pointer relative`}
       onClick={() => handleMovieClick(movie)}
     >
-      {loading ? (
+      <div
+        className={`${
+          loading ? 'opacity-100' : 'opacity-0'
+        } overflow-hidden w-fit h-[300px] rounded-md relative select-none top-0`}
+      >
         <Skeleton
           width={200}
           height={300}
-          className='bg-primary'
-          baseColor='#202020'
-          highlightColor='#444'
+          baseColor='#0B0000'
+          highlightColor='#ba0c0c2f'
           borderRadius='10px'
-          duration={2}
+          enableAnimation
+          duration={4}
         />
-      ) : (
-        <div className='overflow-hidden w-full h-[300px] rounded-md relative select-none'>
+      </div>
+      <div
+        className={`${
+          loading ? 'opacity-0' : 'opacity-100'
+        } overflow-hidden absolute top-0 w-fit h-[300px] rounded-md select-none`}
+      >
+        <main className='relative'>
           <img
-            className='w-full h-full object-cover transition-all duration-1000 ease-in-out transform group-hover:scale-100 scale-110
-            filter grayscale-[55%] group-hover:grayscale-[15%]'
+            className='w-[200px] h-[300px] object-cover transform group-hover:scale-100 scale-110
+            filter grayscale-[55%] group-hover:grayscale-[15%] group-hover:blur-[1px] transition-all duration-1000 ease-in-out'
             src={
               posterPath && posterPath.startsWith('https')
                 ? PLACEHOLDER_URL
                 : URL_IMG(posterPath)
             }
             alt={movieInfo.title}
+            onLoad={() => setLoading(false)}
           />
           <div
-            className='opacity-0 group-hover:opacity-100 absolute top-0 left-0 w-full h-full bg-[#0B0000]/20 bg-opacity-50 
-          transition-all duration-1000 ease-in-out'
+            className='opacity-0 group-hover:opacity-100 absolute top-0 left-0 w-full h-full bg-[#0B0000]/35 bg-opacity-50 
+          transition-all duration-1000 ease-in-out p-4'
           >
-            <article className='flex flex-wrap gap-2 items-start p-4'>
+            <article className='flex flex-wrap gap-2 items-start '>
               {movieInfo.genres?.map(genre => (
                 <span
                   className='px-2 py-1 bg-secondary text-body-12 uppercase rounded-md hover:bg-tertiary transition-colors duration-300 ease-in-out cursor-pointer'
@@ -92,10 +103,22 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
                 </span>
               ))}
             </article>
+            <p className='mt-5  text-body-14 line-clamp-4 font-semibold'>
+              {movieInfo.tagline}
+            </p>
           </div>
+        </main>
+      </div>
+
+      <section className='flex flex-col justify-start gap-3 py-3 px-1 h-[110px] '>
+        <div className='flex justify-between'>
+          <StarRating voteAverage={movieInfo.vote_average!} />
+          <Popularity
+            popularity={movieInfo.popularity!}
+            className='text-body-12 w-fit h-fit'
+          />
         </div>
-      )}
-      <section className='flex flex-col justify-between py-2 h-[110px] '>
+
         <h5 className='h-fit text-body-16 group-hover:underline line-clamp-2'>
           {movieInfo.title} (
           {movieInfo.release_date
@@ -103,10 +126,6 @@ const Card: React.FC<CardProps> = ({ movie, width = 200, height = 400 }) => {
             : '20XX'}
           )
         </h5>
-        <VoteAvg
-          vote_average={movieInfo.vote_average}
-          className='text-body-12 w-fit h-fit transition-transform duration-300 ease-in-out hover:scale-105 p-4'
-        />
       </section>
     </a>
   )

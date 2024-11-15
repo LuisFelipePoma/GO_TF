@@ -13,4 +13,6 @@ COPY . .
 
 RUN npm run build
 
-CMD [ "npm", "run", "dev" ]
+EXPOSE 4321
+
+CMD ["serve", "-s", "dist", "-p", "4321"]
