@@ -87,7 +87,12 @@ const Card: React.FC<CardProps> = ({ movie }) => {
                 : URL_IMG(posterPath)
             }
             alt={movieInfo.title}
-            onLoad={() => setLoading(false)}
+            onLoad={() => {
+              // timeout
+              setTimeout(() => {
+                setLoading(false)
+              }, 1500)
+            }}
           />
           <div
             className='opacity-0 group-hover:opacity-100 absolute top-0 left-0 w-full h-full bg-[#0B0000]/35 bg-opacity-50 

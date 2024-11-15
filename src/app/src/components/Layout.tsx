@@ -57,13 +57,13 @@ const Layout: React.FC = () => {
       <div className='absolute inset-0 -z-10 overflow-hidden'>
         <AnimatePresence>
           <motion.img
-            initial={{ opacity: 0.6, scale: 1.15 }}
+            initial={{ opacity: 0.75, scale: 1.15 }}
             animate={{
-              opacity: [0.6, 0.65, 0.6],
+              opacity: [0.6, 0.75, 0.6],
               scale: [1.1, 1, 1.1]
             }}
             transition={{
-              duration: 15, // Aumenta la duración para un bombeo más lento
+              duration: 25, // Aumenta la duración para un bombeo más lento
               repeat: Infinity, // Repetir indefinidamente
               repeatType: 'mirror', // Alternar entre adelante y atrás
               ease: 'easeInOut'

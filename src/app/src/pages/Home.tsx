@@ -22,7 +22,10 @@ const Home: React.FC = () => {
     setLoading(true)
     getAllMovies(N_MOVIES).then(data => {
       setMovies(data.movie_response!)
-      setLoading(false)
+      //timeout
+      setTimeout(() => {
+        setLoading(false)
+      }, 1500)
     })
   }, [])
 
@@ -55,7 +58,7 @@ const Home: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 1.65}}
+      transition={{ duration: 0.75 }}
       className='flex flex-col gap-10 h-[85vh] w-full'
     >
       <input

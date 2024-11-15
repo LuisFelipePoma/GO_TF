@@ -41,11 +41,11 @@ const MovieInfo: React.FC = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 100 }}
+      initial={{ opacity: 0.15, x: 100 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -100 }}
-      transition={{ duration: 0.5 }}
-      className='grid grid-cols-1 gap-5 place-content-center w-[100%]'
+      exit={{ opacity: 0.15, x: -100 }}
+      transition={{ duration: 0.75 }}
+      className='grid grid-cols-1 gap-10 place-content-center w-[100%]'
     >
       <section className='flex gap-5 h-[500px] w-full items-center'>
         <div className='flex-shrink-0 '>
@@ -69,7 +69,7 @@ const MovieInfo: React.FC = () => {
                   : '20XX'}
                 )
               </h3>
-              <p>{movieInfo.tagline}</p>
+              <p className='italic'>{movieInfo.tagline}</p>
             </section>
             <VoteAvg vote_average={movieInfo.vote_average} />
           </article>
@@ -123,11 +123,11 @@ const MovieInfo: React.FC = () => {
                 width={200}
                 height={300}
                 baseColor='#0B0000'
-                highlightColor='#ba0c0c2f'
+                highlightColor='#1B0000'
                 borderRadius='10px'
                 direction='rtl'
                 enableAnimation={true}
-                duration={4}
+                duration={6}
               />
             ))
           ) : (
