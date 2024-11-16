@@ -190,59 +190,70 @@ func getNMovies(taskMaster types.TaskDistributed) []types.MovieResponse {
 	data := taskMaster.Data
 	n := data.Quantity
 	movies := data.Movies
+	genres := data.TaskSearch.Query
 
-	fmt.Println("Obteniendo", n, "peliculas aleatorias")
+	fmt.Println("Obteniendo", n, "películas aleatorias")
 
-	if n > len(movies) {
-		n = len(movies)
+	// Calcular el voto promedio
+	totalVote := 0.0
+	for _, movie := range movies {
+		totalVote += movie.VoteAverage
 	}
+	averageVote := totalVote / float64(len(movies))
 
-	selected := make([]types.MovieResponse, 0, n)
-	selectedMap := make(map[int]bool)
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	jobs := make(chan int, n*2)
+	var filteredMovies []types.MovieResponse
 
-	// Start worker goroutines
-	for w := 0; w < 5; w++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for index := range jobs {
-				mu.Lock()
-				if !selectedMap[index] {
-					selectedMap[index] = true
-					selected = append(selected, types.MovieResponse{
-						ID:          movies[index].ID,
-						Title:       movies[index].Title,
-						Characters:  movies[index].Characters,
-						Actors:      movies[index].Actors,
-						Director:    movies[index].Director,
-						Genres:      movies[index].Genres,
-						ImdbId:      movies[index].ImdbId,
-						VoteAverage: movies[index].VoteAverage,
-						PosterPath:  movies[index].PosterPath,
-						Overview:    movies[index].Overview,
-					})
-					if len(selected) >= n {
-						mu.Unlock()
-						return
-					}
+	for _, movie := range movies {
+		// Verificar si la película tiene un voto mayor al promedio
+		if movie.VoteAverage <= averageVote {
+			continue
+		}
+		// example of genres => 'All, Comedy, Action'
+		// example of genres => 'All, Comedy, Action'
+
+		// If there is All, skip genres filter
+		if !strings.Contains(genres, "All") {
+			genres := strings.Split(genres, ",")
+			// Verificar si la película tiene ambos de los géneros seleccionados
+			genresMatch := true
+			for _, genre := range genres {
+				if !strings.Contains(movie.Genres, genre) {
+					genresMatch = false
+					break
 				}
-				mu.Unlock()
 			}
-		}()
+			if !genresMatch {
+				continue
+			}
+		}
+
+		// Agregar la película a la lista filtrada
+		filteredMovies = append(filteredMovies, types.MovieResponse{
+			ID:          movie.ID,
+			Title:       movie.Title,
+			Characters:  movie.Characters,
+			Actors:      movie.Actors,
+			Director:    movie.Director,
+			Genres:      movie.Genres,
+			ImdbId:      movie.ImdbId,
+			VoteAverage: movie.VoteAverage,
+			PosterPath:  movie.PosterPath,
+			Overview:    movie.Overview,
+		})
 	}
 
-	// Generate random indices
+	// Ajustar 'n' si es mayor que el número de películas filtradas
+	if n > len(filteredMovies) {
+		n = len(filteredMovies)
+	}
+
+	// Seleccionar aleatoriamente 'n' películas de las filtradas
 	rand.Seed(time.Now().UnixNano())
-	for len(selected) < n {
-		index := rand.Intn(len(movies))
-		jobs <- index
-	}
+	rand.Shuffle(len(filteredMovies), func(i, j int) {
+		filteredMovies[i], filteredMovies[j] = filteredMovies[j], filteredMovies[i]
+	})
 
-	close(jobs)
-	wg.Wait()
+	selected := filteredMovies[:n]
 
 	return selected
 }

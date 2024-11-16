@@ -11,13 +11,15 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 )
 
 var nodeMasterPort = os.Getenv("MASTER_NODE") // Puerto del nodo maestro
 
 var upgrader = websocket.Upgrader{} // Utilizado para actualizar la conexión HTTP a WebSocket
-var clients = make(map[*websocket.Conn]bool)
+var clients = make(map[*websocket.Conn]int)
+var clientsMutex = sync.Mutex{}
 
 // Message represents the recommendation message structure
 type Message struct {
@@ -75,47 +77,82 @@ func handleWebSocketConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
-	// Register our new client
-	clients[ws] = true
+	// Registrar el nuevo cliente con un valor por defecto de 'n'
+	clientsMutex.Lock()
+	clients[ws] = 5 // Valor por defecto inicial
+	clientsMutex.Unlock()
 	fmt.Println("Nuevo cliente conectado.")
 
 	// Listen for new messages
 	for {
-		_, _, err := ws.ReadMessage()
+		_, message, err := ws.ReadMessage()
 		if err != nil {
 			fmt.Println("Cliente desconectado:", err)
 			delete(clients, ws)
 			break
 		}
+		// Parsear el mensaje para obtener 'n'
+		var msg struct {
+			N int `json:"n"`
+		}
+		err = json.Unmarshal(message, &msg)
+		if err != nil {
+			fmt.Println("Error al parsear el mensaje:", err)
+			continue
+		}
+
+		// Actualizar 'n' para este cliente
+		clientsMutex.Lock()
+		clients[ws] = msg.N
+		clientsMutex.Unlock()
+		fmt.Printf("El cliente %s solicitó %d recomendaciones.\n", ws.RemoteAddr(), msg.N)
 	}
 }
 
 // Function for sending periodic recommendations
 func sendPeriodicRecommendations() {
-	// Create Task for the master node
-	request := types.TaskDistributed{
-		Type: types.TaskUserRecomend,
-	}
 	for {
 		time.Sleep(25 * time.Second) // Wait 10 seconds
 
+		clientsMutex.Lock()
 		if len(clients) == 0 {
+			clientsMutex.Unlock()
 			continue
 		}
-		// Get response from the master node
-		response, errorMessage := handleMasterConection(request)
-		if errorMessage != "" {
-			fmt.Println(errorMessage)
-			continue
+
+		// Make a copy of the current clients to iterate
+		currentClients := make(map[*websocket.Conn]int)
+		for client, n := range clients {
+			currentClients[client] = n
 		}
+		clientsMutex.Unlock()
+
 		fmt.Println("Enviando recomendaciones a los clientes.")
 		// Send the recommendations
-		for client := range clients {
+		for client, n := range clients {
+			// Create a request
+			request := types.TaskDistributed{
+				Type: types.TaskUserRecomend,
+				Data: types.TaskData{
+					Quantity: n,
+				},
+			}
+			// Get response from the master node
+			response, errorMessage := handleMasterConection(request)
+			if errorMessage != "" {
+				fmt.Println(errorMessage)
+				continue
+			}
+			fmt.Println("Enviando recomendaciones al cliente: ", client.RemoteAddr())
+			// Send the response to the client
 			err := client.WriteJSON(response)
 			if err != nil {
 				fmt.Println("Error al enviar recomendaciones:", err)
 				client.Close()
+				// remove the client from the list
+				clientsMutex.Lock()
 				delete(clients, client)
+				clientsMutex.Unlock()
 			}
 		}
 	}
@@ -176,6 +213,7 @@ func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 
 func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET /api/movies")
+	genre := r.URL.Query().Get("genre")
 	nStr := r.URL.Query().Get("n")
 	if nStr == "" {
 		nStr = "10"
@@ -192,6 +230,9 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	request := types.TaskDistributed{
 		Type: types.TaskGet,
 		Data: types.TaskData{
+			TaskSearch: &types.TaskSearchQuery{
+				Query: genre,
+			},
 			Quantity: n,
 		},
 	}

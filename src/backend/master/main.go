@@ -95,6 +95,7 @@ func main() {
 	}
 }
 
+// Map the task type to the corresponding handler function
 var dictFunction = map[types.TaskType]func(types.TaskDistributed) types.Response{
 	types.TaskRecomend:     similarMoviesHandler,
 	types.TaskSearch:       searchMoviesHandler,
@@ -211,6 +212,11 @@ func searchMoviesHandler(task types.TaskDistributed) types.Response {
 		return results[i].Similarity > results[j].Similarity
 	})
 
+	// Just get the N Movies
+	if len(results) > task.Data.Quantity {
+		results = results[:task.Data.Quantity]
+	}
+
 	// Create the response
 	response := types.Response{
 		Error:         "",
@@ -234,6 +240,9 @@ func getNMoviesHandler(task types.TaskDistributed) types.Response {
 			Data: types.TaskData{
 				Movies:   movies[r[0]:r[1]],
 				Quantity: n,
+				TaskSearch: &types.TaskSearchQuery{
+					Query: task.Data.TaskSearch.Query,
+				},
 			},
 		}
 		tasks = append(tasks, newTask)
@@ -291,7 +300,7 @@ func sendUserRecomendations(task types.TaskDistributed) types.Response {
 		newTask := types.TaskDistributed{
 			Type: types.TaskUserRecomend,
 			Data: types.TaskData{
-				Quantity: 5,
+				Quantity: task.Data.Quantity,
 				TaskUserRecomendations: &types.TaskUserRecomendations{
 					UserID:      userID,
 					User:        moviesService.UserRatings[userID].Ratings,
@@ -313,6 +322,11 @@ func sendUserRecomendations(task types.TaskDistributed) types.Response {
 	sort.Slice(combinedResults, func(i, j int) bool {
 		return combinedResults[i].Similarity > combinedResults[j].Similarity
 	})
+
+	// Limit the number of results to n
+	if len(combinedResults) > task.Data.Quantity {
+		combinedResults = combinedResults[:task.Data.Quantity]
+	}
 
 	// Create the response
 	response := types.Response{

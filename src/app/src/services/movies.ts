@@ -3,9 +3,14 @@ import { type Response } from '../types/movies'
 import type { TmdbResponse } from '../types/tmdb'
 
 // Service to get all movies
-export const getAllMovies = async (n: number): Promise<Response> => {
+export const getAllMovies = async (
+  genres: string[],
+  n: number
+): Promise<Response> => {
   try {
-    const response = await fetch(`${URL_API}/movies?n=${n}`)
+    const response = await fetch(
+      `${URL_API}/movies?n=${n}&genre=${genres.join(',')}`
+    )
     if (!response.ok) {
       throw new Error(`Error fetching movies: ${response.statusText}`)
     }

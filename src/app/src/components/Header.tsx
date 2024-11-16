@@ -1,13 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useLocation } from 'react-router-dom'
 import { Icon } from '../assets/Icon'
+import { useStore } from '../services/store'
 
 export const Header: React.FC = () => {
   const location = useLocation()
+  const nMoviesHome = useStore((state: any) => state.nMoviesHome)
+  const setNMoviesHome = useStore((state: any) => state.setNMoviesHome)
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     if (location.pathname === '/') {
       e.preventDefault()
-      window.location.reload()
+      setNMoviesHome(nMoviesHome + 1)
     }
   }
 

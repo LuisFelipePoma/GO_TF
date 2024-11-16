@@ -7,8 +7,9 @@ import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { MovieResponse } from '../types/movies'
 import { TmdbResponse } from '../types/tmdb'
 import { MovieInfoDummie } from '../dum/movie'
-import { Popularity } from './Popularity'
-import { StarRating } from './StartRating'
+import { Popularity } from './Items/Popularity'
+import { StarRating } from './Items/StartRating'
+import { useStore } from '../services/store'
 
 interface CardProps {
   movie: MovieResponse
@@ -20,6 +21,8 @@ const Card: React.FC<CardProps> = ({ movie }) => {
   )
   const [movieInfo, setMovieInfo] = useState<TmdbResponse>(MovieInfoDummie)
   const [loading, setLoading] = useState(true)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setForwardHistory = useStore((state: any) => state.setForwardHistory)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -43,18 +46,17 @@ const Card: React.FC<CardProps> = ({ movie }) => {
   }, [movie.id, movie.poster_path])
 
   const handleMovieClick = (movie: MovieResponse) => {
-    if (!movieInfo) return
-    console.log(movieInfo)
-    navigate(`/movie/${movie.id}`, { state: { movie, movieInfo } })
-    // also take to the top of the page
+    if (movieInfo.id == -1) return
     window.scrollTo(0, 0)
+    setForwardHistory(0)
+    navigate(`/movie/${movie.id}`, { state: { movie, movieInfo } })
   }
 
   return (
     <a
-      className={`h-[400px] w-[200px] group rounded-md 
+      className={`h-[400px] w-[200px] group rounded-lg 
         transition-all duration-300 ease-in-out hover:drop-shadow-2xl 
-        hover:bg-dark/70 cursor-pointer relative`}
+        hover:bg-dark/10 cursor-pointer relative`}
       onClick={() => handleMovieClick(movie)}
     >
       <div
@@ -80,7 +82,7 @@ const Card: React.FC<CardProps> = ({ movie }) => {
         <main className='relative'>
           <img
             className='w-[200px] h-[300px] object-cover transform group-hover:scale-100 scale-110
-            filter grayscale-[55%] group-hover:grayscale-[15%] group-hover:blur-[1px] transition-all duration-1000 ease-in-out'
+            filter grayscale-[35%] group-hover:grayscale-[15%] group-hover:blur-[1px] transition-all duration-1000 ease-in-out'
             src={
               posterPath && posterPath.startsWith('https')
                 ? PLACEHOLDER_URL

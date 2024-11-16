@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { MovieResponse } from '../types/movies'
 import { getRecommendations } from '../services/movies'
 import { ListMovies } from '../components/ListMovies'
@@ -7,8 +8,9 @@ import Skeleton from 'react-loading-skeleton'
 import { PLACEHOLDER_URL, URL_IMG } from '../consts/api'
 import { TmdbResponse } from '../types/tmdb'
 import { useStore } from '../services/store'
-import { VoteAvg } from '../components/VoteAvg'
+import { VoteAvg } from '../components/Items/VoteAvg'
 import { motion } from 'framer-motion'
+import { NavigationBtn } from '../components/Items/NavigationBtn'
 
 const MovieInfo: React.FC = () => {
   const location = useLocation()
@@ -17,9 +19,11 @@ const MovieInfo: React.FC = () => {
   const [recomendations, setRecomendations] = React.useState<MovieResponse[]>(
     []
   )
-  const [loading, setLoading] = React.useState<boolean>(true)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [loading, setLoading] = useState<boolean>(true)
   const setBackgroundPath = useStore((state: any) => state.setBackgroundPath)
+  const forwardHistory = useStore((state: any) => state.forwardHistory)
+  const setForwardHistory = useStore((state: any) => state.setForwardHistory)
+  const navigate = useNavigate()
 
   useEffect(() => {
     let isMounted = true
@@ -39,6 +43,15 @@ const MovieInfo: React.FC = () => {
     }
   }, [movieInfo, setBackgroundPath])
 
+  function handleForward () {
+    setForwardHistory(forwardHistory - 1)
+    navigate(1)
+  }
+  function handlePrevious () {
+    setForwardHistory(forwardHistory + 1)
+    navigate(-1)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0.15, x: 100 }}
@@ -47,6 +60,42 @@ const MovieInfo: React.FC = () => {
       transition={{ duration: 0.75 }}
       className='grid grid-cols-1 gap-10 place-content-center w-[100%]'
     >
+      <div className='flex justify-between'>
+        <NavigationBtn handleDirection={handlePrevious}>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            width={36}
+            height={36}
+            strokeWidth={2}
+          >
+            <path d='M15 6l-6 6 6 6'></path>
+          </svg>
+        </NavigationBtn>
+        {forwardHistory > 0 ? (
+          <NavigationBtn handleDirection={handleForward}>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              width={36}
+              height={36}
+              strokeWidth={2}
+            >
+              <path d='M9 18l6-6-6-6'></path>
+            </svg>
+          </NavigationBtn>
+        ) : (
+          ''
+        )}
+      </div>
       <section className='flex gap-5 h-[500px] w-full items-center'>
         <div className='flex-shrink-0 '>
           <img

@@ -1,0 +1,57 @@
+/* InputRange.css */
+
+/* Remove default spin buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: none;
+  -moz-appearance: textfield;
+  width: 100%;
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem; /* Top/Bottom, Right, Left Padding */
+  font-size: 1rem;
+  color: var(--color-light); /* Use Tailwind's light color */
+  background-color: var(--color-dark); /* Use Tailwind's dark color */
+  border: 1px solid var(--color-primary); /* Use Tailwind's primary color */
+  border-radius: 0.375rem; /* Rounded corners */
+  position: relative;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Focus Styles */
+input[type="number"]:focus {
+  outline: none;
+  border-color: var(--color-primary); /* Use Tailwind's primary color */
+  box-shadow: 0 0 0 3px rgba(186, 12, 12, 0.5); /* Soft primary color shadow */
+}
+
+/* Hover Styles */
+input[type="number"]:hover {
+  border-color: var(--color-secondary); /* Use Tailwind's secondary color */
+}
+
+/* Container for Increment/Decrement Buttons */
+.input-number-container {
+  position: relative;
+}
+
+/* Buttons Styling */
+.input-number-container button {
+  background: none;
+  border: none;
+  color: var(--color-gray); /* Use Tailwind's gray color */
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.input-number-container button:hover {
+  color: var(--color-light); /* Change to light color on hover */
+}
+
+.input-number-container button:focus {
+  outline: none;
+}

@@ -4,12 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: 'var(--color-primary)',
-        secondary: 'var(--color-secondary)',
-        tertiary: 'var(--color-tertiary)',
-        light: 'var(--color-light)',
-        dark: 'var(--color-dark)',
-        gray: 'var(--color-gray)'
+        primary: '#ba0c0c',
+        secondary: '#980a0a',
+        tertiary: '#564d4d',
+        light: '#ffffff',
+        dark: '#0B0000',
+        gray: '#acb2b7'
       },
       fontSize: {
         'body-20': 'var(--font-size-20)',
