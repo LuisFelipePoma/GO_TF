@@ -5,6 +5,9 @@ export const useStore = create(set => ({
   setBackgroundPath: (backgroundPath: string) => set({ backgroundPath }),
   nMoviesSearch: 21,
   setNMoviesSearch: (nMoviesSearch: number) => set({ nMoviesSearch }),
+  nMoviesRecomendations: 21,
+  setNMoviesRecomendations: (nMoviesRecomendations: number) =>
+    set({ nMoviesRecomendations }),
   nMoviesUser: 3,
   setNMoviesUser: (nMoviesUser: number) => set({ nMoviesUser }),
   nMoviesHome: 21,

@@ -15,43 +15,12 @@ import (
 	"time"
 )
 
-var nodeMasterPort = os.Getenv("MASTER_NODE") // Puerto del nodo maestro
+var nodeMasterPort = os.Getenv("MASTER_NODE") // Port of the master node
+var upgrader = websocket.Upgrader{}           // Upgrade the HTTP connection to a WebSocket connection
+var clients = make(map[*websocket.Conn]int)   // Clients connected to the WebSocket and the number of recommendations
+var clientsMutex = sync.Mutex{}               // Mutex for the clients map
 
-var upgrader = websocket.Upgrader{} // Utilizado para actualizar la conexión HTTP a WebSocket
-var clients = make(map[*websocket.Conn]int)
-var clientsMutex = sync.Mutex{}
-
-// Message represents the recommendation message structure
-type Message struct {
-	User            string   `json:"user"`
-	Recommendations []string `json:"recommendations"`
-}
-
-func main() {
-	// Leer el puerto desde la variable de entorno
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8000" // Puerto por defecto si no está configurado
-	}
-	// Configurar los manejadores HTTP
-	setupRoutes()
-
-	// Iniciar una rutina para enviar recomendaciones periódicamente
-	go sendPeriodicRecommendations()
-
-	fmt.Println("Server is running on port", port)
-	http.ListenAndServe(":"+port, nil)
-}
-
-// Configurar los manejadores HTTP
-func setupRoutes() {
-	http.HandleFunc("/api/movies/similar", corsMiddleware(getSimilarMovies)) // GET
-	http.HandleFunc("/api/movies/search", corsMiddleware(getMoviesBySearch)) // GET
-	http.HandleFunc("/api/movies", corsMiddleware(getAllMovies))             // GET
-	http.HandleFunc("/ws", handleWebSocketConnections)                       // WebSocket endpoint
-}
-
-// Middleware para manejar CORS
+// Middleware for handling CORS
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -65,24 +34,48 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// Configurate the routes for the server
+func setupRoutes() {
+	http.HandleFunc("/api/movies/similar", corsMiddleware(getSimilarMovies)) // GET similar movies
+	http.HandleFunc("/api/movies/search", corsMiddleware(getMoviesBySearch)) // GET movies by search
+	http.HandleFunc("/api/movies", corsMiddleware(getAllMovies))             // GET all movies
+	http.HandleFunc("/ws", handleWebSocketConnections)                       // WebSocket endpoint to get recommendations for users
+}
+
+func main() {
+	// Read the port from the environment variables
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000" // Default port
+	}
+	// Config the routes for the server
+	setupRoutes()
+
+	// Start the goroutine for sending periodic recommendations
+	go sendPeriodicRecommendations()
+
+	// Start the server on the specified port
+	fmt.Println("Server is running on port", port)
+	http.ListenAndServe(":"+port, nil)
+}
+
 // HANDLERS
 // Handler to send recommendations
 func handleWebSocketConnections(w http.ResponseWriter, r *http.Request) {
 	// Update the upgrader to allow all connections
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // Permitir todas las conexiones
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // Allow all connections
+	// Upgrade the HTTP connection to a WebSocket
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("Error al actualizar a WebSocket:", err)
 		return
 	}
 	defer ws.Close()
-
-	// Registrar el nuevo cliente con un valor por defecto de 'n'
+	// Register the new client with a default value
 	clientsMutex.Lock()
-	clients[ws] = 5 // Valor por defecto inicial
+	clients[ws] = 5 // Default value
 	clientsMutex.Unlock()
-	fmt.Println("Nuevo cliente conectado.")
-
+	fmt.Println("Nuevo cliente conectado -> ", ws.RemoteAddr())
 	// Listen for new messages
 	for {
 		_, message, err := ws.ReadMessage()
@@ -91,19 +84,19 @@ func handleWebSocketConnections(w http.ResponseWriter, r *http.Request) {
 			delete(clients, ws)
 			break
 		}
-		// Parsear el mensaje para obtener 'n'
+		// The message is a JSON object with the number of recommendations from the user
 		var msg struct {
 			N int `json:"n"`
 		}
+		// Parse the message to get the number of recommendations
 		err = json.Unmarshal(message, &msg)
 		if err != nil {
 			fmt.Println("Error al parsear el mensaje:", err)
 			continue
 		}
-
-		// Actualizar 'n' para este cliente
+		// Update the number of recommendations for the client
 		clientsMutex.Lock()
-		clients[ws] = msg.N
+		clients[ws] = msg.N // Update the number of recommendations
 		clientsMutex.Unlock()
 		fmt.Printf("El cliente %s solicitó %d recomendaciones.\n", ws.RemoteAddr(), msg.N)
 	}
@@ -112,18 +105,19 @@ func handleWebSocketConnections(w http.ResponseWriter, r *http.Request) {
 // Function for sending periodic recommendations
 func sendPeriodicRecommendations() {
 	for {
-		time.Sleep(25 * time.Second) // Wait 10 seconds
+		time.Sleep(25 * time.Second) // Wait 25 seconds
 
+		// Check if there are clients connected
 		clientsMutex.Lock()
-		if len(clients) == 0 {
-			clientsMutex.Unlock()
+		if len(clients) == 0 { // If there are no clients connected
+			clientsMutex.Unlock() // Unlock the mutex
 			continue
 		}
 
 		// Make a copy of the current clients to iterate
 		currentClients := make(map[*websocket.Conn]int)
 		for client, n := range clients {
-			currentClients[client] = n
+			currentClients[client] = n // Copy the client to the new map with the number of recommendations
 		}
 		clientsMutex.Unlock()
 
@@ -161,7 +155,7 @@ func sendPeriodicRecommendations() {
 // Handle the similar movies request
 func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET /api/movies/similar")
-	// Leer el cuerpo de la petición
+	// Read the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
@@ -169,20 +163,21 @@ func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	// Parse the JSON body
 	var data map[string]interface{}
 	if err := json.Unmarshal(body, &data); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	// Obtener y validar 'id'
+	// Obtain and validate 'id'
 	id, ok := data["id"].(float64)
 	if !ok {
 		http.Error(w, "ID is required and must be a number", http.StatusBadRequest)
 		return
 	}
 
-	// Obtener y validar 'n'
+	// Obtain and validate 'n'
 	nFloat, ok := data["n"].(float64)
 	if !ok {
 		http.Error(w, "Quantity 'n' is required and must be a number", http.StatusBadRequest)
@@ -190,7 +185,7 @@ func getSimilarMovies(w http.ResponseWriter, r *http.Request) {
 	}
 	quantity := int(nFloat)
 	movieId := int(id)
-	// Create a request
+	// Create a request to get the similar movies
 	request := types.TaskDistributed{
 		Type: types.TaskRecomend,
 		Data: types.TaskData{

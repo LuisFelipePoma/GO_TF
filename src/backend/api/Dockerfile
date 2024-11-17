@@ -8,12 +8,9 @@ WORKDIR /app
 COPY . .
 
 # Descarga las dependencias del módulo Go
-# RUN go mod download
-#Update dependencies
-RUN go get -u ./...
+RUN go mod download
 
 # Compila la aplicación
-RUN go mod tidy
 RUN go build -o api .
 
 # Comando para ejecutar la aplicación

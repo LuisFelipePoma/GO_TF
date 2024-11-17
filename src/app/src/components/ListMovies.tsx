@@ -10,7 +10,7 @@ export const ListMovies: React.FC<Props> = ({ movies }) => {
   return (
     <div
       className='grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] 
-    gap-y-10 gap-x-4 w-full h-[85%]'
+    gap-y-10 gap-x-[18px] w-full h-[85%]'
     >
       {movies && movies.map(movie => <Card key={movie.id} movie={movie} />)}
     </div>

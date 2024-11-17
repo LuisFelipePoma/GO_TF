@@ -10,8 +10,6 @@ COPY . .
 # Descarga las dependencias del módulo Go
 RUN go mod download
 
-RUN go mod tidy
-
 # Compila la aplicación
 RUN go build -o slave .
 

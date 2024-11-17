@@ -25,7 +25,7 @@ input[type="number"] {
 input[type="number"]:focus {
   outline: none;
   border-color: var(--color-primary); /* Use Tailwind's primary color */
-  box-shadow: 0 0 0 3px rgba(186, 12, 12, 0.5); /* Soft primary color shadow */
+  box-shadow: 0 0 0 3px var(--color-secondary); /* Soft primary color shadow */
 }
 
 /* Hover Styles */

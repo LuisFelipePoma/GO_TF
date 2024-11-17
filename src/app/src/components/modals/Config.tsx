@@ -18,22 +18,33 @@ const Config: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const nMoviesUser = useStore((state: any) => state.nMoviesUser)
   const setNMoviesSearch = useStore((state: any) => state.setNMoviesSearch)
   const setNMoviesUser = useStore((state: any) => state.setNMoviesUser)
+  const nMoviesRecomendations = useStore(
+    (state: any) => state.nMoviesRecomendations
+  )
+  const setNMoviesRecomendations = useStore(
+    (state: any) => state.setNMoviesRecomendations
+  )
 
   const [formSearch, setFormSearch] = useState(nMoviesSearch)
   const [formHome, setFormHome] = useState(nMoviesHome)
   const [formUser, setFormUser] = useState(nMoviesUser)
+  const [formRecomendations, setFormRecomendations] = useState(
+    nMoviesRecomendations
+  )
 
   useEffect(() => {
     setFormSearch(nMoviesSearch)
     setFormHome(nMoviesHome)
     setFormUser(nMoviesUser)
-  }, [nMoviesSearch, nMoviesHome, nMoviesUser])
+    setFormRecomendations(nMoviesRecomendations)
+  }, [nMoviesSearch, nMoviesHome, nMoviesUser, nMoviesRecomendations])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setNMoviesSearch(formSearch)
     setNMoviesHome(formHome)
     setNMoviesUser(formUser)
+    setNMoviesRecomendations(formRecomendations)
   }
 
   return (
@@ -67,24 +78,93 @@ const Config: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           className='flex flex-col gap-4 p-4 h-full'
           onSubmit={handleSubmit}
         >
-          <div className='flex flex-col gap-2'>
-            <label htmlFor='nMoviesSearch' className='text-white'>
-              Número de películas en la búsqueda
-            </label>
-            <InputRange formSearch={formSearch} setFormSearch={setFormSearch} />
-          </div>
-          <div className='flex flex-col gap-2'>
-            <label htmlFor='nMoviesHome' className='text-white'>
-              Número de películas en la página principal
-            </label>
-            <InputRange formSearch={formHome} setFormSearch={setFormHome} />
-          </div>
-          <div className='flex flex-col gap-2'>
-            <label htmlFor='nMoviesUser' className='text-white'>
-              Número de películas en la página de usuario
-            </label>
-            <InputRange formSearch={formUser} setFormSearch={setFormUser} />
-          </div>
+          <InputRange
+            formSearch={formHome}
+            setFormSearch={setFormHome}
+            description='Number of movies on the home page'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              width={24}
+              height={24}
+              strokeWidth={2}
+            >
+              <path d='M19.072 21h-14.144a1.928 1.928 0 0 1 -1.928 -1.928v-6.857c0 -.512 .203 -1 .566 -1.365l7.07 -7.063a1.928 1.928 0 0 1 2.727 0l7.071 7.063c.363 .362 .566 .853 .566 1.365v6.857a1.928 1.928 0 0 1 -1.928 1.928z'></path>{' '}
+              <path d='M7 13v4h10v-4l-5 -5'></path>{' '}
+              <path d='M14.8 5.2l-11.8 11.8'></path> <path d='M7 17v4'></path>{' '}
+              <path d='M17 17v4'></path>{' '}
+            </svg>
+          </InputRange>
+
+          <InputRange
+            formSearch={formUser}
+            setFormSearch={setFormUser}
+            description='Number of recomendations per user'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              width={24}
+              height={24}
+              strokeWidth={2}
+            >
+              {' '}
+              <path d='M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0'></path>{' '}
+              <path d='M6 21v-2a4 4 0 0 1 4 -4h.5'></path>{' '}
+              <path d='M18 22l3.35 -3.284a2.143 2.143 0 0 0 .005 -3.071a2.242 2.242 0 0 0 -3.129 -.006l-.224 .22l-.223 -.22a2.242 2.242 0 0 0 -3.128 -.006a2.143 2.143 0 0 0 -.006 3.071l3.355 3.296z'></path>{' '}
+            </svg>{' '}
+          </InputRange>
+          <InputRange
+            formSearch={formSearch}
+            setFormSearch={setFormSearch}
+            description='Number of movies on the search'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              width={24}
+              height={24}
+              strokeWidth={2}
+            >
+              {' '}
+              <path d='M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0'></path>{' '}
+              <path d='M21 21l-6 -6'></path>{' '}
+            </svg>
+          </InputRange>
+          <InputRange
+            formSearch={formRecomendations}
+            setFormSearch={setFormRecomendations}
+            description='Number of recomendations per movie'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              width={24}
+              height={24}
+              strokeWidth={2}
+            >
+              {' '}
+              <path d='M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z'></path>{' '}
+              <path d='M16 3l-4 4l-4 -4'></path>{' '}
+            </svg>
+          </InputRange>
           <button
             type='submit'
             className='bg-primary text-white px-4 py-3 rounded mt-5 disabled:bg-tertiary
@@ -95,7 +175,8 @@ const Config: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             disabled={
               formSearch === nMoviesSearch &&
               formHome === nMoviesHome &&
-              formUser === nMoviesUser
+              formUser === nMoviesUser &&
+              formRecomendations === nMoviesRecomendations
             }
           >
             Apply changes

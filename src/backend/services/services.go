@@ -14,9 +14,8 @@ import (
 
 // Movies represents the structure of the movies service.
 type Movies struct {
-	Movies        []types.Movie
-	RatingsLength int
-	UserRatings   map[int]types.User
+	Movies      []types.Movie      // List of movies
+	UserRatings map[int]types.User // Map of user ratings
 }
 
 // NewMovies creates a new Movies service.
@@ -40,7 +39,7 @@ func (m *Movies) LoadMovies(filePath string) error {
 	return nil
 }
 
-// Implementa el método LoadRatings
+// LoadRatings load ratings from a CSV file.
 func (m *Movies) LoadRatings(filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -93,6 +92,7 @@ func (m *Movies) GetMovieById(idMovie int) (*types.Movie, error) {
 	return nil, fmt.Errorf("movie with ID %d not found", idMovie)
 }
 
+// GetRandomUserID returns a random user ID.
 func (m *Movies) GetRandomUserID() int {
 	if len(m.UserRatings) == 0 {
 		return 0 // or handle the empty case as needed

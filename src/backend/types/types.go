@@ -42,6 +42,7 @@ type Response struct {
 // DATA TASK
 type TaskType string
 
+// TaskType represents the task type
 const (
 	TaskNone         TaskType = ""
 	TaskRecomend     TaskType = "Recommend"
@@ -50,11 +51,13 @@ const (
 	TaskUserRecomend TaskType = "UserRecomend"
 )
 
+// TaskDistributed represents the task
 type TaskDistributed struct {
 	Type TaskType `json:"type"`
 	Data TaskData `json:"data"`
 }
 
+// TaskData represents the task data structure
 type TaskData struct {
 	TaskRecomendations     *TaskRecomendations     `json:"recomendations,omitempty"`
 	TaskSearch             *TaskSearchQuery        `json:"search,omitempty"`
@@ -63,23 +66,44 @@ type TaskData struct {
 	Movies                 []Movie                 `json:"movies"`
 }
 
+// TaskRecomendations represents the recommendation task structure
 type TaskRecomendations struct {
 	MovieId     int   `json:"movie_id"`
 	TargetMovie Movie `json:"movie"`
 }
 
+// TaskSearchQuery represents the search query task structure
 type TaskSearchQuery struct {
 	Query string `json:"query"`
 }
 
-// TaskUserRecomendations representa la tarea de recomendaciones para un usuario
+// TaskUserRecomendations represents the user recommendation task structure
 type TaskUserRecomendations struct {
 	UserID      int             `json:"user_id"`
 	User        map[int]float64 `json:"user"`
 	UserRatings map[int]User    `json:"user2"`
 }
 
+// User represents the user structure for the user recommendation task
 type User struct {
 	ID      int
 	Ratings map[int]float64
+}
+
+// Message represents the recommendation message structure
+type Message struct {
+	User            string   `json:"user"`
+	Recommendations []string `json:"recommendations"`
+}
+
+// Task represents a task to be processed by a slave node
+type Task struct {
+	Slave    string
+	TaskData TaskDistributed
+}
+
+// Result represents the result from a slave node
+type Result struct {
+	Response Response
+	Error    error
 }

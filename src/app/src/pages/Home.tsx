@@ -15,7 +15,6 @@ const Home: React.FC = () => {
   const [movies, setMovies] = useState<MovieResponse[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [query, setQuery] = useState<string>('')
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(['All'])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nMovieSearch = useStore((state: any) => state.nMoviesSearch)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,17 +22,18 @@ const Home: React.FC = () => {
 
   // Debounce the query input
   const [debouncedQuery] = useDebounce(query, DEBOUNCE_DELAY)
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(['All'])
+  const [debouncedSelectedGenres] = useDebounce(selectedGenres, DEBOUNCE_DELAY)
 
   useEffect(() => {
     setLoading(true)
-    getAllMovies(selectedGenres, nMoviesHome).then(data => {
+    getAllMovies(debouncedSelectedGenres, nMoviesHome).then(data => {
       setMovies(data.movie_response!)
-      //timeout
       setTimeout(() => {
         setLoading(false)
-      }, 1500)
+      }, 2000)
     })
-  }, [nMoviesHome, selectedGenres])
+  }, [nMoviesHome, debouncedSelectedGenres])
 
   useEffect(() => {
     if (debouncedQuery === '') {
@@ -90,7 +90,7 @@ const Home: React.FC = () => {
         <ul className='flex flex-wrap gap-3 select-none w-[750px]'>
           {genres.map(genre => (
             <GenreTag
-              key={genre.id}
+              key={'home-tg-' + genre.id}
               genre={genre}
               onClick={handleGenreSelected}
               className={

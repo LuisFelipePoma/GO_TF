@@ -88,9 +88,9 @@ const Layout: React.FC = () => {
       <div className='absolute inset-0 -z-10 overflow-hidden'>
         <AnimatePresence>
           <motion.img
-            initial={{ opacity: 0.75, scale: 1.15 }}
+            initial={{ opacity: 0.6, scale: 1.1 }}
             animate={{
-              opacity: [0.6, 0.75, 0.6],
+              opacity: [0.6, 0.85, 0.6],
               scale: [1.1, 1, 1.1]
             }}
             transition={{
@@ -99,14 +99,14 @@ const Layout: React.FC = () => {
               repeatType: 'mirror',
               ease: 'easeInOut'
             }}
-            className='w-full h-full object-cover filter blur-[0.85px] absolute top-0 left-0'
+            className='w-full h-full object-cover filter blur-[0.35px] absolute top-0 left-0'
             src={
               backgroundPath ? URL_IMG(backgroundPath, 'original') : '/bg.webp'
             }
             alt='Background'
           />
         </AnimatePresence>
-        <div className='absolute inset-0 bg-gradient-to-b from-[#0B0000]/75 via-transparent to-transparent' />
+        <div className='fixed inset-0 bg-gradient-to-b from-[#0B0000]/75 via-transparent to-transparent' />
         <div className='absolute inset-0 bg-gradient-to-t from-dark to-transparent' />
       </div>
 

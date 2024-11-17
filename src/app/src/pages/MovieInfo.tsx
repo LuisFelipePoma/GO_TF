@@ -11,6 +11,7 @@ import { useStore } from '../services/store'
 import { VoteAvg } from '../components/Items/VoteAvg'
 import { motion } from 'framer-motion'
 import { NavigationBtn } from '../components/Items/NavigationBtn'
+import { GenreTag } from '../components/Items/GenreTag'
 
 const MovieInfo: React.FC = () => {
   const location = useLocation()
@@ -19,19 +20,27 @@ const MovieInfo: React.FC = () => {
   const [recomendations, setRecomendations] = React.useState<MovieResponse[]>(
     []
   )
+  const [filterRecomendations, setFilterRecomendations] = React.useState<
+    MovieResponse[]
+  >([])
   const [loading, setLoading] = useState<boolean>(true)
   const setBackgroundPath = useStore((state: any) => state.setBackgroundPath)
   const forwardHistory = useStore((state: any) => state.forwardHistory)
   const setForwardHistory = useStore((state: any) => state.setForwardHistory)
   const navigate = useNavigate()
+  const nMoviesRecomendations = useStore(
+    (state: any) => state.nMoviesRecomendations
+  )
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([])
 
   useEffect(() => {
     let isMounted = true
 
     setLoading(true)
-    getRecommendations(movieInfo.id!, 21).then(res => {
+    getRecommendations(movieInfo.id!, nMoviesRecomendations).then(res => {
       if (isMounted) {
         setRecomendations(res.movie_response!)
+        setFilterRecomendations(res.movie_response!)
         setLoading(false)
       }
     })
@@ -41,7 +50,7 @@ const MovieInfo: React.FC = () => {
       isMounted = false
       setBackgroundPath(null)
     }
-  }, [movieInfo, setBackgroundPath])
+  }, [movieInfo, nMoviesRecomendations, setBackgroundPath])
 
   function handleForward () {
     setForwardHistory(forwardHistory - 1)
@@ -51,6 +60,27 @@ const MovieInfo: React.FC = () => {
     setForwardHistory(forwardHistory + 1)
     navigate(-1)
   }
+
+  function handleSelectedGenres (genre: string) {
+    if (selectedGenres.includes(genre)) {
+      setSelectedGenres(selectedGenres.filter(g => g !== genre))
+      return
+    }
+    setSelectedGenres([...selectedGenres, genre])
+  }
+
+  useEffect(() => {
+    if (selectedGenres.length === 0) {
+      setFilterRecomendations(recomendations)
+    } else {
+      // filter recomendations by selected genres, has to have all the genres of selectedgenres
+      const filtered = recomendations.filter(movie =>
+        // movie.genres : string
+        selectedGenres.every(genre => movie.genres?.includes(genre))
+      )
+      setFilterRecomendations(filtered)
+    }
+  }, [selectedGenres, recomendations])
 
   return (
     <motion.div
@@ -73,7 +103,9 @@ const MovieInfo: React.FC = () => {
             height={36}
             strokeWidth={2}
           >
-            <path d='M15 6l-6 6 6 6'></path>
+            {' '}
+            <path d='M9 14l-4 -4l4 -4'></path>{' '}
+            <path d='M5 10h11a4 4 0 1 1 0 8h-1'></path>{' '}
           </svg>
         </NavigationBtn>
         {forwardHistory > 0 ? (
@@ -85,11 +117,11 @@ const MovieInfo: React.FC = () => {
               stroke='currentColor'
               strokeLinecap='round'
               strokeLinejoin='round'
-              width={36}
-              height={36}
-              strokeWidth={2}
+              width='36'
+              height='36'
+              stroke-width='2'
             >
-              <path d='M9 18l6-6-6-6'></path>
+              <path d='M15 11l4 4l-4 4m4 -4h-11a4 4 0 0 1 0 -8h1'></path>{' '}
             </svg>
           </NavigationBtn>
         ) : (
@@ -125,13 +157,15 @@ const MovieInfo: React.FC = () => {
           <article className='flex flex-col gap-5'>
             <p className='text-body-16 text-balance'>{movieInfo.overview}</p>
             <p className='flex flex-wrap gap-3 select-none'>
-              {movieInfo.genres!.map((genre, i) => (
-                <span
-                  className='w-fit px-3 py-1 bg-secondary rounded-md hover:bg-primary transition-colors duration-500 ease-in-out'
-                  key={`${i}-genre${genre.id}`}
-                >
-                  {genre.name}
-                </span>
+              {movieInfo.genres!.map(genre => (
+                <GenreTag
+                  genre={genre}
+                  onClick={handleSelectedGenres}
+                  className={
+                    selectedGenres.includes(genre.name!) ? 'bg-tertiary' : ''
+                  }
+                  key={'mi-tg-' + genre.id}
+                />
               ))}
             </p>
           </article>
@@ -180,7 +214,7 @@ const MovieInfo: React.FC = () => {
               />
             ))
           ) : (
-            <ListMovies movies={recomendations} />
+            <ListMovies movies={filterRecomendations} />
           )}
         </div>
       </section>

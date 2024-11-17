@@ -22,48 +22,29 @@ var slaveNodes = []string{
 	os.Getenv("SLAVE3"),
 }
 
-// Task represents a task to be processed by a slave node
-type Task struct {
-	Slave    string
-	TaskData types.TaskDistributed
-}
-
-// Result represents the result from a slave node
-type Result struct {
-	Response types.Response
-	Error    error
-}
-
-var moviesService = services.NewMovies()
-var movies []types.Movie
-
-// Distribute the task to the slave nodes
-var numSlaves = len(slaveNodes)
-var rangesMovies [][2]int
-
-const TIMEOUT = 10 * time.Second
-const MAX_RETRIES = 2
-
-// 500ms
-const RETRY_DELAY = 150 * time.Millisecond
+var moviesService = services.NewMovies()  // Create a new instance of the Movies service
+var numSlaves = len(slaveNodes)           // Number of slave nodes
+var rangesMovies [][2]int                 // Ranges of movies for each node
+const TIMEOUT = 10 * time.Second          // Timeout for the connection
+const MAX_RETRIES = 2                     // Maximum number of retries to connect to a node
+const RETRY_DELAY = 50 * time.Millisecond // Delay between retries
 
 // ENTRYPOINT
 func main() {
-	// Leer el puerto desde la variable de entorno
+	// Read the environment variables for the port and the name of the node
 	port := os.Getenv("PORT")
 	name := os.Getenv("NODE_NAME")
 	if port == "" {
 		log.Fatal("El puerto no está configurado en la variable de entorno PORT")
 	}
 
-	// Cargar Peliculas
+	// Load the movies
 	err := moviesService.LoadMovies("movies.json")
 	if err != nil {
 		fmt.Println("No se pudo cargar la informacion de las peliculas.", err)
 		return
 	}
-
-	// Cargar Ratings
+	// Load the ratings
 	err = moviesService.LoadRatings("ratings.csv")
 	if err != nil {
 		fmt.Println("No se pudo cargar los ratings.", err)
@@ -71,8 +52,7 @@ func main() {
 	}
 
 	// Split the movies into ranges
-	movies = moviesService.Movies
-	rangesMovies = utils.SplitRanges(len(movies), numSlaves)
+	rangesMovies = utils.SplitRanges(len(moviesService.Movies), numSlaves)
 
 	// Create a listener
 	listener, err := net.Listen("tcp", ":"+port)
@@ -147,7 +127,7 @@ func similarMoviesHandler(task types.TaskDistributed) types.Response {
 		newTask := types.TaskDistributed{
 			Type: types.TaskRecomend,
 			Data: types.TaskData{
-				Movies: movies[r[0]:r[1]],
+				Movies: moviesService.Movies[r[0]:r[1]],
 				TaskRecomendations: &types.TaskRecomendations{
 					MovieId:     movieTarget.ID,
 					TargetMovie: *movieTarget,
@@ -192,7 +172,7 @@ func searchMoviesHandler(task types.TaskDistributed) types.Response {
 		newTask := types.TaskDistributed{
 			Type: types.TaskSearch,
 			Data: types.TaskData{
-				Movies: movies[r[0]:r[1]],
+				Movies: moviesService.Movies[r[0]:r[1]],
 				TaskSearch: &types.TaskSearchQuery{
 					Query: query,
 				},
@@ -238,7 +218,7 @@ func getNMoviesHandler(task types.TaskDistributed) types.Response {
 		newTask := types.TaskDistributed{
 			Type: types.TaskGet,
 			Data: types.TaskData{
-				Movies:   movies[r[0]:r[1]],
+				Movies:   moviesService.Movies[r[0]:r[1]],
 				Quantity: n,
 				TaskSearch: &types.TaskSearchQuery{
 					Query: task.Data.TaskSearch.Query,
@@ -271,15 +251,15 @@ func getNMoviesHandler(task types.TaskDistributed) types.Response {
 
 // DivideUsers splits the users into specified number of groups, excluding the given userId
 func SplitUsers(usersRatings map[int]types.User, excludeUserId int, numGroups int) []map[int]types.User {
-	groups := make([]map[int]types.User, numGroups)
-	for i := range groups {
-		groups[i] = make(map[int]types.User)
+	groups := make([]map[int]types.User, numGroups) // Create the groups
+	for i := range groups {                         // Initialize the groups
+		groups[i] = make(map[int]types.User) // Initialize the map
 	}
-	currentGroup := 0
-	for id, user := range usersRatings {
-		if user.ID != excludeUserId {
-			groups[currentGroup][id] = user
-			currentGroup = (currentGroup + 1) % numGroups
+	currentGroup := 0                    // Initialize the current group
+	for id, user := range usersRatings { // Iterate over the users
+		if user.ID != excludeUserId { // Exclude the user
+			groups[currentGroup][id] = user               // Add the user to the current group
+			currentGroup = (currentGroup + 1) % numGroups // Move to the next group in a circular way
 		}
 	}
 	return groups
@@ -382,7 +362,7 @@ func senTaskToNode(node string, task types.TaskDistributed) ([]types.MovieRespon
 			break
 		}
 		log.Printf("Error al conectar con el nodo %s, reintentando (%d/%d)\n", node, i+1, MAX_RETRIES)
-		time.Sleep(RETRY_DELAY)
+		// time.Sleep(RETRY_DELAY)
 	}
 
 	// Check if there was an error connecting to the node

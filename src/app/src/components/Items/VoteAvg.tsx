@@ -7,7 +7,7 @@ interface Props {
 export const VoteAvg: React.FC<Props> = ({ vote_average }) => {
   return (
     <span
-      className={`select-none flex gap-1 items-center px-3 py-1 rounded-full font-semibold 
+      className={`select-none flex gap-1 items-center px-4 py-2 rounded-full font-semibold 
 					bg-secondary text-light
 					shadow-md transition-colors duration-300 ease-in-out`}
     >
