@@ -1,93 +1,78 @@
+version: '3.8'
+
 services:
-  # <--------------- NODOS
-  # NODO SERVIDOR
   master:
     build:
       context: ./backend/master
-      dockerfile: Dockerfile
     environment:
-      - NODE_NAME=master
-      - PORT=8081
-      - SLAVE1=slave1:8082
-      - SLAVE2=slave2:8083
-      - SLAVE3=slave3:8084
-    ports:
-      - "8081:8081"
-    networks:
-      - slave_network
-      - app
+      NODE_NAME: master
+      PORT: 8081
+      SLAVE1: slave1:8082
+      SLAVE2: slave2:8083
+      SLAVE3: slave3:8084
     depends_on:
       - slave1
       - slave2
       - slave3
-  # NODOS CLIENTES
+    networks:
+      - app
+
   slave1:
     build:
       context: ./backend/slave
-      dockerfile: Dockerfile
     environment:
-      - NODE_NAME=slave1
-      - PORT=8082
-    ports:
-      - "8082:8082"
+      NODE_NAME: slave1
+      PORT: 8082
     networks:
-      - slave_network
+      - app
 
   slave2:
     build:
       context: ./backend/slave
-      dockerfile: Dockerfile
     environment:
-      - NODE_NAME=slave2
-      - PORT=8083
-    ports:
-      - "8083:8083"
+      NODE_NAME: slave2
+      PORT: 8083
     networks:
-      - slave_network
+      - app
 
   slave3:
     build:
       context: ./backend/slave
-      dockerfile: Dockerfile
     environment:
-      - NODE_NAME=slave3
-      - PORT=8084
-    ports:
-      - "8084:8084"
+      NODE_NAME: slave3
+      PORT: 8084
     networks:
-      - slave_network
+      - app
 
-  # API ENDPOINT (BACKEND)
   api:
     build:
       context: ./backend/api
-      dockerfile: Dockerfile
     environment:
-      - MASTER_NODE=master:8081
-      - PORT=3000
+      MASTER_NODE: master:8081
+      PORT: 3000
     ports:
       - "3000:3000"
-    networks:
-      - app
     depends_on:
       - master
+    networks:
+      - app
 
-  # App Web (FRONTEND)
   app:
     build:
       context: ./app
-      dockerfile: Dockerfile
     environment:
-      - VITE_API_URL=http://127.0.0.1:3000/api
-      - VITE_API_WS=http://127.0.0.1:3000/ws
-      - VITE_API_TMDB=eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2MWI5NzEyMWIzZTY1MTI3N2JiMTkzOWEyZGI2M2VkMyIsIm5iZiI6MTczMDYwOTI2OS43OTA3MTcsInN1YiI6IjY0YTcwNzE5OTU3ZTZkMDEzOWNmMDc2ZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.AvK5oxP2qIFQ4BbNpOsIR-Sj1bAZoqDx_VZPTY1Lx0w
+      VITE_API_URL: http://api:3000/api
+      VITE_API_WS: http://api:3000/ws
+      VITE_API_TMDB: eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2MWI5NzEyMWIzZTY1MTI3N2JiMTkzOWEyZGI2M2VkMyIsIm5iZiI6MTczMDYwOTI2OS43OTA3MTcsInN1YiI6IjY0YTcwNzE5OTU3ZTZkMDEzOWNmMDc2ZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.AvK5oxP2qIFQ4BbNpOsIR-Sj1bAZoqDx_VZPTY1Lx0w
     ports:
       - "4321:4321"
-    networks:
-      - app
     depends_on:
       - api
+    networks:
+      - app
 
 networks:
-  slave_network:
   app:
+    driver: bridge
+
+
